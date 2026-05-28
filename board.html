@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Risk Board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link active" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><span class="cur">Risk Board</span></div>
+    <div style="margin-left:16px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="chip chip-active" onclick="filterDomain('all',this)">All Domains</span>
+      <span class="chip chip-inactive" onclick="filterDomain('sentiment',this)">NS Sentiment</span>
+      <span class="chip chip-inactive" onclick="filterDomain('deepfake',this)">Deepfake</span>
+      <span class="chip chip-inactive" onclick="filterDomain('info-ops',this)">Info Ops</span>
+      <span class="chip chip-inactive" onclick="filterDomain('health',this)">Health & Safety</span>
+      <span class="chip chip-inactive" onclick="filterDomain('cyber',this)">Cyber</span>
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-ghost">▽ Filter</button>
+      <button class="btn btn-primary" onclick="alert('Create risk flow opening...')">+ Create Risk</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">Risk Board</div>
+        <div class="page-sub">16 active risks across 8 domains · MINDEF Headquarters</div>
+      </div>
+      <!-- Risk Matrix mini -->
+      <div class="card" style="padding:12px 16px;width:220px">
+        <div style="font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px">Risk Matrix</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;width:100px;margin:0 auto">
+          <!-- 5×5 heatmap cells -->
+          <div style="width:18px;height:18px;background:#375623;border-radius:2px"></div><div style="width:18px;height:18px;background:#375623;border-radius:2px"></div><div style="width:18px;height:18px;background:#C6EFCE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div>
+          <div style="width:18px;height:18px;background:#375623;border-radius:2px"></div><div style="width:18px;height:18px;background:#C6EFCE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FF0000;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:white;font-weight:900">●</div>
+          <div style="width:18px;height:18px;background:#C6EFCE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#7d4e00;font-weight:900">●</div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div>
+          <div style="width:18px;height:18px;background:#C6EFCE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div>
+          <div style="width:18px;height:18px;background:#FFEB9C;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FFC7CE;border-radius:2px"></div><div style="width:18px;height:18px;background:#FF0000;border-radius:2px"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;justify-content:center;font-size:9.5px;color:var(--muted)">
+          <span>🔴 Gross</span><span>🟡 Residual</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="board">
+      <!-- WATCH -->
+      <div>
+        <div class="board-col-hdr bc-watch">
+          <span>👁 WATCH</span>
+          <span style="background:rgba(59,130,246,.2);color:var(--primary);padding:2px 8px;border-radius:10px;font-size:10px">6</span>
+        </div>
+        <div class="board-col-body">
+
+          <div class="risk-card" data-domain="health">
+            <div class="rc-hdr">
+              <span class="tag tag-health">Health & Safety</span>
+              <span class="rc-code">ARIA-HS-003</span>
+            </div>
+            <div class="rc-title">Elevated heat injury cluster — Kranji Training Area</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">🌡 8 cases in 14 days</span>
+              <span>· 2x historical baseline</span>
+            </div>
+            <div class="rc-owner">👤 Col Ahmad Bin Razak · SAF Medical Corps</div>
+          </div>
+
+          <div class="risk-card" data-domain="procurement">
+            <div class="rc-hdr">
+              <span class="tag tag-procurement">Procurement</span>
+              <span class="rc-code">ARIA-PR-001</span>
+            </div>
+            <div class="rc-title">Bid pattern anomaly — RSAF equipment maintenance tender</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">⚠ σ3.1 deviation</span>
+              <span>· 3 vendor cluster</span>
+            </div>
+            <div class="rc-owner">👤 Maj Wong Shu Fen · MINDEF HQ</div>
+          </div>
+
+          <div class="risk-card" data-domain="sentiment">
+            <div class="rc-hdr">
+              <span class="tag tag-sentiment">NS Sentiment</span>
+              <span class="rc-code">ARIA-NS-007</span>
+            </div>
+            <div class="rc-title">Family Support dimension trending below baseline for 12 days</div>
+            <div class="rc-meta">
+              <span style="color:var(--primary)">−4.1% vs IPS baseline</span>
+            </div>
+            <div class="rc-owner">👤 Capt Chen Xin Yi · Nexus Team</div>
+          </div>
+
+          <div class="risk-card" data-domain="cyber">
+            <div class="rc-hdr">
+              <span class="tag tag-cyber">Cyber Intel</span>
+              <span class="rc-code">ARIA-CY-002</span>
+            </div>
+            <div class="rc-title">Phishing domain mimicking ns.sg portal registered 4 days ago</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">Low traffic · monitoring</span>
+            </div>
+            <div class="rc-owner">👤 Capt Lim Hui Shan · DIS</div>
+          </div>
+
+          <div class="risk-card" data-domain="sentiment">
+            <div class="rc-hdr">
+              <span class="tag tag-sentiment">NS Sentiment</span>
+              <span class="rc-code">ARIA-NS-008</span>
+            </div>
+            <div class="rc-title">SAFVC enrolment −11% vs same period last year</div>
+            <div class="rc-meta">
+              <span style="color:var(--primary)">Engagement proxy signal</span>
+            </div>
+            <div class="rc-owner">👤 LTC Bryan Lim · SAFVC</div>
+          </div>
+
+          <div class="risk-card" data-domain="cyber">
+            <div class="rc-hdr">
+              <span class="tag tag-cyber">Cyber Intel</span>
+              <span class="rc-code">ARIA-CY-004</span>
+            </div>
+            <div class="rc-title">Credential stuffing attempts on MINDEF staff portal elevated</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">+38% vs 30d baseline</span>
+            </div>
+            <div class="rc-owner">👤 Capt Rajesh Kumar · DIS</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- INVESTIGATE -->
+      <div>
+        <div class="board-col-hdr bc-investigate">
+          <span>🔍 INVESTIGATE</span>
+          <span style="background:rgba(245,158,11,.2);color:var(--warning);padding:2px 8px;border-radius:10px;font-size:10px">7</span>
+        </div>
+        <div class="board-col-body">
+
+          <div class="risk-card" data-domain="sentiment">
+            <div class="rc-hdr">
+              <span class="tag tag-sentiment">NS Sentiment</span>
+              <span class="rc-code">ARIA-NS-003</span>
+            </div>
+            <div class="rc-title">"NS Inequality" narrative: 1.8% → 14.2% frame prevalence in 7 days</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger)">σ4.8 — above critical threshold</span>
+            </div>
+            <div class="rc-meta" style="gap:4px">
+              <span>EDMW, Reddit, TikTok</span>
+            </div>
+            <div class="rc-owner">👤 Capt Chen Xin Yi · Nexus Team</div>
+          </div>
+
+          <div class="risk-card" data-domain="sentiment">
+            <div class="rc-hdr">
+              <span class="tag tag-sentiment">NS Sentiment</span>
+              <span class="rc-code">ARIA-NS-005</span>
+            </div>
+            <div class="rc-title">Civilian Employability dimension −8.3% below IPS baseline (sustained 9 days)</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger)">Auto-escalation in 5 days</span>
+            </div>
+            <div class="rc-owner">👤 Maj Ravi Menon · Nexus Team</div>
+          </div>
+
+          <div class="risk-card" data-domain="info-ops">
+            <div class="rc-hdr">
+              <span class="tag tag-info-ops">Info Ops</span>
+              <span class="rc-code">ARIA-IO-002</span>
+            </div>
+            <div class="rc-title">Coordinated anti-NS content seeding across 4 platforms — 12 account cluster</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger)">Coordination index 0.87</span>
+            </div>
+            <div class="rc-meta"><span>TikTok, Telegram, Twitter/X, EDMW</span></div>
+            <div class="rc-owner">👤 LTC Bryan Lim · DIS</div>
+          </div>
+
+          <div class="risk-card" data-domain="deepfake">
+            <div class="rc-hdr">
+              <span class="tag tag-deepfake">Deepfake</span>
+              <span class="rc-code">ARIA-DF-003</span>
+            </div>
+            <div class="rc-title">Voice clone of NS hotline — used in advance loan scam targeting NSFs</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">47 reported victim contacts</span>
+            </div>
+            <div class="rc-owner">👤 Capt Lim Hui Shan · DIS</div>
+          </div>
+
+          <div class="risk-card" data-domain="health">
+            <div class="rc-hdr">
+              <span class="tag tag-health">Health & Safety</span>
+              <span class="rc-code">ARIA-HS-001</span>
+            </div>
+            <div class="rc-title">3 non-battle injuries at same unit in 30 days — statistical cluster</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">p=0.031 — anomalous</span>
+              <span>· Pulau Tekong</span>
+            </div>
+            <div class="rc-owner">👤 Col Ahmad Bin Razak · SAF Medical Corps</div>
+          </div>
+
+          <div class="risk-card" data-domain="info-ops">
+            <div class="rc-hdr">
+              <span class="tag tag-info-ops">Info Ops</span>
+              <span class="rc-code">ARIA-IO-004</span>
+            </div>
+            <div class="rc-title">Foreign-language anti-NS content translated into English — cross-linguistic seeding pattern</div>
+            <div class="rc-meta">
+              <span style="color:var(--warning)">Medium sophistication IO</span>
+            </div>
+            <div class="rc-owner">👤 LTC Bryan Lim · DIS</div>
+          </div>
+
+          <div class="risk-card" data-domain="cyber">
+            <div class="rc-hdr">
+              <span class="tag tag-cyber">Cyber Intel</span>
+              <span class="rc-code">ARIA-CY-001</span>
+            </div>
+            <div class="rc-title">NRIC + bank credential harvesting targeting NSF personnel via fake SAF app</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger)">312 potential victims identified</span>
+            </div>
+            <div class="rc-owner">👤 Capt Rajesh Kumar · DIS</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ESCALATE -->
+      <div>
+        <div class="board-col-hdr bc-escalate">
+          <span>🚨 ESCALATE</span>
+          <span style="background:rgba(239,68,68,.2);color:var(--danger);padding:2px 8px;border-radius:10px;font-size:10px">3</span>
+        </div>
+        <div class="board-col-body">
+
+          <div class="risk-card" style="border-color:rgba(239,68,68,.3)" data-domain="deepfake">
+            <div class="rc-hdr">
+              <span class="tag tag-deepfake">Deepfake</span>
+              <span class="rc-code">ARIA-DF-001</span>
+            </div>
+            <div class="rc-title">Synthetic video impersonating senior SAF commander — 94,000 views on Telegram</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger);font-weight:700">🔴 CRITICAL · Active spread</span>
+            </div>
+            <div class="rc-meta"><span>3 seeder accounts flagged · Coordination confirmed</span></div>
+            <div class="rc-owner">👤 Capt Lim Hui Shan · DIS</div>
+            <div style="margin-top:8px">
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;width:100%" onclick="alert('Escalation package opening...')">✦ Diagnose & Escalate</button>
+            </div>
+          </div>
+
+          <div class="risk-card" style="border-color:rgba(239,68,68,.3)" data-domain="info-ops">
+            <div class="rc-hdr">
+              <span class="tag tag-info-ops">Info Ops</span>
+              <span class="rc-code">ARIA-IO-001</span>
+            </div>
+            <div class="rc-title">Coordinated IO campaign: 28-day sustained NS baseline erosion — σ drift 0.8%/week</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger);font-weight:700">🔴 Strategic erosion pattern confirmed</span>
+            </div>
+            <div class="rc-meta"><span>High-sophistication · Foreign nexus suspected</span></div>
+            <div class="rc-owner">👤 LTC Bryan Lim · DIS</div>
+            <div style="margin-top:8px">
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;width:100%" onclick="alert('Escalation package opening...')">✦ Diagnose & Escalate</button>
+            </div>
+          </div>
+
+          <div class="risk-card" style="border-color:rgba(239,68,68,.3)" data-domain="sentiment">
+            <div class="rc-hdr">
+              <span class="tag tag-sentiment">NS Sentiment</span>
+              <span class="rc-code">ARIA-NS-001</span>
+            </div>
+            <div class="rc-title">Defence Necessity dimension: correlated decline with 3 other dimensions — multi-dimensional alert</div>
+            <div class="rc-meta">
+              <span style="color:var(--danger);font-weight:700">🔴 3 critical dimensions in red zone</span>
+            </div>
+            <div class="rc-meta"><span>First multi-dim alert in 18 months</span></div>
+            <div class="rc-owner">👤 Maj Ravi Menon · Nexus Team</div>
+            <div style="margin-top:8px">
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 10px;width:100%" onclick="alert('Escalation package opening...')">✦ Diagnose & Escalate</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterDomain(domain, el) {
+  document.querySelectorAll('.chip').forEach(c => { c.className = 'chip chip-inactive'; });
+  el.className = 'chip chip-active';
+  document.querySelectorAll('.risk-card').forEach(card => {
+    if (domain === 'all' || card.dataset.domain === domain) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>

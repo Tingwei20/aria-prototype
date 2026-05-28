@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — NS Sentiment Module</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link active" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><a href="#" style="color:var(--muted);text-decoration:none">Intelligence</a><span class="sep">/</span><span class="cur">NS Sentiment</span></div>
+    <div class="tb-right">
+      <div class="card-badge cb-info" style="padding:4px 12px">IPS Baseline: 2022/23</div>
+      <button class="btn btn-ghost">⬇ Export</button>
+      <button class="btn btn-primary">⟳ Recalibrate</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">NS Public Sentiment Module</div>
+        <div class="page-sub">Multi-source anomaly detection across 8 IPS dimensions · <span style="color:var(--warning);font-weight:600">⚠ 3 dimensions in anomaly zone</span></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div class="card" style="padding:10px 16px;text-align:center">
+          <div style="font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Overall Sentiment Score</div>
+          <div style="font-size:32px;font-weight:900;color:var(--warning);letter-spacing:-2px;margin-top:4px">76.4</div>
+          <div style="font-size:11px;color:var(--muted)">−4.8 vs IPS baseline (81.2)</div>
+        </div>
+        <div class="card" style="padding:10px 16px;text-align:center">
+          <div style="font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Alert Status</div>
+          <div style="font-size:20px;font-weight:900;color:var(--warning);margin-top:6px">INVESTIGATE</div>
+          <div style="font-size:11px;color:var(--muted)">Auto-escalate in 5 days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IPS Dimension Health -->
+    <div class="card mb14">
+      <div class="card-hdr">
+        <div class="card-title">◎ IPS Dimension Health — Current vs Baseline</div>
+        <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:rgba(255,255,255,.25);display:inline-block;border-radius:2px"></span>Baseline</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:var(--primary);display:inline-block;border-radius:2px"></span>Current</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- rows: label, baseline%, current%, delta -->
+        <div id="dim-rows"></div>
+      </div>
+    </div>
+
+    <!-- Timeline + Environmental -->
+    <div class="g60 mb14">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">↗ Composite Sentiment Timeline — 12 Months</div>
+          <div style="display:flex;gap:6px">
+            <span class="chip chip-inactive" style="font-size:11px">3m</span>
+            <span class="chip chip-active" style="font-size:11px">12m</span>
+            <span class="chip chip-inactive" style="font-size:11px">All</span>
+          </div>
+        </div>
+        <div class="card-body"><div style="height:220px"><canvas id="sentimentTimeline"></canvas></div></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Environmental Pressure -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">⚡ Environmental Pressure Indicators</div>
+            <span class="card-badge cb-warn">ELEVATED</span>
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div class="gauge-card">
+              <div class="gauge-label">Economic Confidence Pressure</div>
+              <div class="gauge-bar"><div class="gauge-fill" style="width:72%;background:linear-gradient(90deg,#F59E0B,#EF4444)"></div></div>
+              <div class="flex-between"><div class="gauge-val" style="color:var(--warning)">HIGH</div><div class="gauge-sub">MNC layoffs +18% QoQ · Retrenchment discourse elevated</div></div>
+            </div>
+            <div class="gauge-card">
+              <div class="gauge-label">Emigration Discourse Volume</div>
+              <div class="gauge-bar"><div class="gauge-fill" style="width:55%;background:var(--warning)"></div></div>
+              <div class="flex-between"><div class="gauge-val" style="color:var(--warning)">MEDIUM</div><div class="gauge-sub">PR renunciation discourse +9% vs baseline</div></div>
+            </div>
+            <div class="gauge-card">
+              <div class="gauge-label">Geopolitical Context</div>
+              <div class="gauge-bar"><div class="gauge-fill" style="width:45%;background:var(--primary)"></div></div>
+              <div class="flex-between"><div class="gauge-val" style="color:var(--primary)">MODERATE</div><div class="gauge-sub">Thai-Cambodia tensions · Gaza war discourse continuing</div></div>
+            </div>
+            <div class="gauge-card">
+              <div class="gauge-label">Policy & Demographic Pressure</div>
+              <div class="gauge-bar"><div class="gauge-fill" style="width:28%;background:var(--success)"></div></div>
+              <div class="flex-between"><div class="gauge-val" style="color:var(--success)">LOW</div><div class="gauge-sub">No major policy changes in review period</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Narrative Tracker + SAFVC -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">📡 Narrative Anomaly Tracker</div>
+          <span class="card-badge cb-danger">3 ANOMALIES</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Narrative Frame</th><th>Baseline</th><th>Current</th><th>Δ</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div style="font-weight:600;font-size:12px">"NS Inequality / Unfair Burden"</div><div style="font-size:11px;color:var(--muted)">Links NS obligation to income disparity</div></td>
+                <td><span style="color:var(--muted)">1.8%</span></td>
+                <td><span style="font-weight:700;color:var(--danger)">14.2%</span></td>
+                <td><span style="color:var(--danger);font-weight:700">+12.4pp</span></td>
+                <td><span class="status-badge sb-escalate">Escalate</span></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600;font-size:12px">"NS Kills Career Prospects"</div><div style="font-size:11px;color:var(--muted)">Employability disadvantage narrative</div></td>
+                <td><span style="color:var(--muted)">8.2%</span></td>
+                <td><span style="font-weight:700;color:var(--warning)">18.9%</span></td>
+                <td><span style="color:var(--warning);font-weight:700">+10.7pp</span></td>
+                <td><span class="status-badge sb-investigate">Investigate</span></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600;font-size:12px">"Why defend for others to enjoy?"</div><div style="font-size:11px;color:var(--muted)">New citizen / foreigner resentment angle</div></td>
+                <td><span style="color:var(--muted)">3.1%</span></td>
+                <td><span style="font-weight:700;color:var(--warning)">9.4%</span></td>
+                <td><span style="color:var(--warning);font-weight:700">+6.3pp</span></td>
+                <td><span class="status-badge sb-investigate">Investigate</span></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600;font-size:12px">"NS builds character & resilience"</div><div style="font-size:11px;color:var(--muted)">Positive identity narrative (baseline)</div></td>
+                <td><span style="color:var(--muted)">62.4%</span></td>
+                <td><span style="font-weight:700;color:var(--success)">58.1%</span></td>
+                <td><span style="color:var(--warning);font-weight:700">−4.3pp</span></td>
+                <td><span class="status-badge sb-watch">Watch</span></td>
+              </tr>
+              <tr>
+                <td><div style="font-weight:600;font-size:12px">"NS is necessary for Singapore's defence"</div><div style="font-size:11px;color:var(--muted)">Core necessity frame (critical dim)</div></td>
+                <td><span style="color:var(--muted)">82.1%</span></td>
+                <td><span style="font-weight:700;color:var(--success)">79.3%</span></td>
+                <td><span style="color:var(--warning);font-weight:700">−2.8pp</span></td>
+                <td><span class="status-badge sb-watch">Watch</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">🤝 SAFVC & Engagement Signals</div>
+            <span class="card-badge cb-warn">DECLINING</span>
+          </div>
+          <div class="card-body"><div style="height:150px"><canvas id="safvcChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">🏛 Source Breakdown</div>
+          </div>
+          <div class="card-body"><div style="height:150px;display:flex;align-items:center;justify-content:center"><canvas id="sourceChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Dimension data
+const dims = [
+  {label:"Defence Necessity",         base:97, cur:94, risk:"normal"},
+  {label:"Compulsory NS Support",     base:93, cur:89, risk:"watch"},
+  {label:"Future Importance",         base:97, cur:93, risk:"watch"},
+  {label:"Training Safety Confidence",base:94, cur:91, risk:"watch"},
+  {label:"Family Support",            base:89, cur:85, risk:"watch"},
+  {label:"Rite of Passage Identity",  base:94, cur:91, risk:"normal"},
+  {label:"Social Cohesion Value",     base:89, cur:86, risk:"watch"},
+  {label:"Civilian Employability",    base:71, cur:63, risk:"critical"},
+];
+const riskColor = {normal:"var(--primary)", watch:"var(--warning)", critical:"var(--danger)"};
+const container = document.getElementById("dim-rows");
+dims.forEach(d => {
+  const delta = d.cur - d.base;
+  const col = riskColor[d.risk];
+  container.innerHTML += `
+  <div class="dim-row">
+    <div class="dim-label">${d.label}</div>
+    <div class="dim-bar-wrap">
+      <div class="dim-bar" style="width:${d.cur}%;background:${col}"></div>
+      <div class="dim-baseline-line" style="left:${d.base}%"></div>
+    </div>
+    <div class="dim-pct" style="color:${col}">${d.cur}%</div>
+    <div class="dim-delta ${delta<0?'d-neg':'d-pos'}">${delta>0?'+':''}${delta}pp</div>
+  </div>`;
+});
+
+// Sentiment Timeline
+const months = ["Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May"];
+const ctx1 = document.getElementById("sentimentTimeline").getContext("2d");
+new Chart(ctx1,{type:"line",data:{labels:months,datasets:[
+  {label:"Composite Score",data:[83.1,82.8,82.4,82.1,81.8,81.3,80.9,80.2,79.1,78.3,77.4,76.4],borderColor:"#3B82F6",backgroundColor:"rgba(59,130,246,.1)",fill:true,tension:.4,pointRadius:3,borderWidth:2.5},
+  {label:"IPS Baseline",data:[81.2,81.2,81.2,81.2,81.2,81.2,81.2,81.2,81.2,81.2,81.2,81.2],borderColor:"rgba(255,255,255,.25)",borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false},
+  {label:"Alert Threshold",data:[78,78,78,78,78,78,78,78,78,78,78,78],borderColor:"rgba(239,68,68,.4)",borderDash:[3,3],borderWidth:1.5,pointRadius:0,fill:false},
+]},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{position:"bottom",labels:{color:"#94A3B8",font:{size:11},boxWidth:12,padding:14}},
+    tooltip:{backgroundColor:"#0D1424",borderColor:"#1E2D4A",borderWidth:1,padding:10}},
+  scales:{x:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:11}}},
+    y:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:11}},min:70,max:90}}}});
+
+// SAFVC Chart
+const ctx2 = document.getElementById("safvcChart").getContext("2d");
+new Chart(ctx2,{type:"bar",data:{labels:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+  datasets:[{label:"SAFVC Enrolments",data:[420,395,410,388,375,362,348,331,318,305,298,288],backgroundColor:"rgba(59,130,246,.5)",borderColor:"#3B82F6",borderWidth:1,borderRadius:4},
+    {label:"Museum Visits (÷10)",data:[52,49,51,48,46,44,42,40,38,36,35,33],backgroundColor:"rgba(20,184,166,.4)",borderColor:"#14B8A6",borderWidth:1,borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{color:"#94A3B8",font:{size:10},boxWidth:10,padding:10}},
+    tooltip:{backgroundColor:"#0D1424",borderColor:"#1E2D4A",borderWidth:1,padding:8}},
+    scales:{x:{grid:{display:false},ticks:{color:"#4B5E7A",font:{size:10}}},
+      y:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:10}}}}}});
+
+// Source donut
+const ctx3 = document.getElementById("sourceChart").getContext("2d");
+new Chart(ctx3,{type:"doughnut",data:{labels:["Reddit/EDMW","TikTok","News Media","Twitter/X","Parliament","YouTube","Other"],
+  datasets:[{data:[32,24,18,14,6,4,2],backgroundColor:["#3B82F6","#8B5CF6","#10B981","#F59E0B","#14B8A6","#F97316","#64748B"],borderWidth:0,hoverOffset:4}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:"70%",
+    plugins:{legend:{position:"right",labels:{color:"#94A3B8",font:{size:10},boxWidth:10,padding:8}},
+      tooltip:{backgroundColor:"#0D1424",borderColor:"#1E2D4A",borderWidth:1,padding:8}}}});
+</script>
+</body>
+</html>

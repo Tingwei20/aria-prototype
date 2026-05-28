@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Risk Registry</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link active" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><span class="cur">Risk Registry</span></div>
+    <div style="margin-left:16px;display:flex;gap:6px">
+      <span class="chip chip-active" id="tab-active" onclick="setTab('active')">Active</span>
+      <span class="chip chip-inactive" id="tab-resolved" onclick="setTab('resolved')">Resolved</span>
+      <span class="chip chip-inactive" id="tab-all" onclick="setTab('all')">All</span>
+    </div>
+    <div class="tb-right">
+      <button class="btn btn-ghost" onclick="alert('Summarising registry with AI...')">✦ Summarise Registry</button>
+      <button class="btn btn-primary" onclick="alert('Create risk form...')">+ Create Risk</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">Risk Registry</div>
+        <div class="page-sub">Total: 16 active · 4 resolved · 3 entities · Last updated: <span id="ts"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" placeholder="🔍  Search risks..." style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;color:var(--text);font-size:12px;width:220px;outline:none" oninput="filterTable(this.value)">
+        <button class="btn btn-ghost">▽ Filter</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="data-table" id="registry-table">
+          <thead>
+            <tr>
+              <th>Risk Name</th>
+              <th>Domain</th>
+              <th>Entity</th>
+              <th>Code</th>
+              <th>Risk Owner</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th>Detected</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="registry-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('ts').textContent = new Date().toLocaleString('en-SG',{timeZone:'Asia/Singapore',hour12:false});
+
+const risks = [
+  {name:"Deepfake SAF Commander video — coordinated Telegram amplification",domain:"deepfake",entity:"Digital & Intelligence Service",code:"ARIA-DF-001",owner:"Capt Lim Hui Shan",severity:"critical",status:"escalate",date:"28 May 2026"},
+  {name:"Coordinated IO campaign: 28-day sustained NS baseline erosion",domain:"info-ops",entity:"Digital & Intelligence Service",code:"ARIA-IO-001",owner:"LTC Bryan Lim",severity:"critical",status:"escalate",date:"20 May 2026"},
+  {name:"Defence Necessity dimension: multi-dimensional correlated decline",domain:"sentiment",entity:"Nexus Team",code:"ARIA-NS-001",owner:"Maj Ravi Menon",severity:"critical",status:"escalate",date:"19 May 2026"},
+  {name:"\"NS Inequality\" narrative: 1.8% → 14.2% frame prevalence spike",domain:"sentiment",entity:"Nexus Team",code:"ARIA-NS-003",owner:"Capt Chen Xin Yi",severity:"high",status:"investigate",date:"26 May 2026"},
+  {name:"Civilian Employability dimension −8.3% below IPS baseline",domain:"sentiment",entity:"Nexus Team",code:"ARIA-NS-005",owner:"Maj Ravi Menon",severity:"high",status:"investigate",date:"22 May 2026"},
+  {name:"Coordinated anti-NS content seeding across 4 platforms — 12-account cluster",domain:"info-ops",entity:"Digital & Intelligence Service",code:"ARIA-IO-002",owner:"LTC Bryan Lim",severity:"high",status:"investigate",date:"25 May 2026"},
+  {name:"Voice clone of NS hotline used in advance loan scam targeting NSFs",domain:"deepfake",entity:"Digital & Intelligence Service",code:"ARIA-DF-003",owner:"Capt Lim Hui Shan",severity:"high",status:"investigate",date:"24 May 2026"},
+  {name:"Heat injury cluster — Kranji Training Area (8 cases / 14 days)",domain:"health",entity:"SAF Medical Corps",code:"ARIA-HS-003",owner:"Col Ahmad Bin Razak",severity:"high",status:"investigate",date:"27 May 2026"},
+  {name:"NRIC + bank credential harvesting via fake SAF app",domain:"cyber",entity:"Digital & Intelligence Service",code:"ARIA-CY-001",owner:"Capt Rajesh Kumar",severity:"high",status:"investigate",date:"23 May 2026"},
+  {name:"Foreign-language anti-NS content translated & seeded in English",domain:"info-ops",entity:"Digital & Intelligence Service",code:"ARIA-IO-004",owner:"LTC Bryan Lim",severity:"high",status:"investigate",date:"21 May 2026"},
+  {name:"Family Support dimension trending −4.1% for 12 days",domain:"sentiment",entity:"Nexus Team",code:"ARIA-NS-007",owner:"Capt Chen Xin Yi",severity:"medium",status:"watch",date:"15 May 2026"},
+  {name:"Bid pattern anomaly — RSAF equipment maintenance tender",domain:"procurement",entity:"MINDEF HQ",code:"ARIA-PR-001",owner:"Maj Wong Shu Fen",severity:"medium",status:"watch",date:"18 May 2026"},
+  {name:"SAFVC enrolment −11% vs same period last year",domain:"sentiment",entity:"SAFVC",code:"ARIA-NS-008",owner:"LTC Bryan Lim",severity:"medium",status:"watch",date:"10 May 2026"},
+  {name:"Phishing domain mimicking ns.sg portal registered",domain:"cyber",entity:"Digital & Intelligence Service",code:"ARIA-CY-002",owner:"Capt Lim Hui Shan",severity:"medium",status:"watch",date:"24 May 2026"},
+  {name:"3 non-battle injuries at same unit — Pulau Tekong (30 days)",domain:"health",entity:"SAF Medical Corps",code:"ARIA-HS-001",owner:"Col Ahmad Bin Razak",severity:"medium",status:"watch",date:"20 May 2026"},
+  {name:"Credential stuffing attempts on MINDEF staff portal elevated +38%",domain:"cyber",entity:"Digital & Intelligence Service",code:"ARIA-CY-004",owner:"Capt Rajesh Kumar",severity:"medium",status:"watch",date:"17 May 2026"},
+];
+
+const domainTag = {
+  sentiment:`<span class="tag tag-sentiment">NS Sentiment</span>`,
+  deepfake:`<span class="tag tag-deepfake">Deepfake</span>`,
+  "info-ops":`<span class="tag tag-info-ops">Info Ops</span>`,
+  health:`<span class="tag tag-health">Health & Safety</span>`,
+  cyber:`<span class="tag tag-cyber">Cyber Intel</span>`,
+  procurement:`<span class="tag tag-procurement">Procurement</span>`,
+};
+const statusBadge = {
+  escalate:`<span class="status-badge sb-escalate">🔴 Escalate</span>`,
+  investigate:`<span class="status-badge sb-investigate">🟡 Investigate</span>`,
+  watch:`<span class="status-badge sb-watch">🔵 Watch</span>`,
+};
+const severityDot = {critical:`<span style="color:var(--danger);font-weight:700">● Critical</span>`,high:`<span style="color:var(--warning);font-weight:700">● High</span>`,medium:`<span style="color:var(--primary);font-weight:700">● Medium</span>`};
+
+let currentTab = 'active';
+function renderTable(filter=''){
+  const body = document.getElementById('registry-body');
+  const rows = risks.filter(r => {
+    const match = filter==='' || r.name.toLowerCase().includes(filter.toLowerCase()) || r.code.toLowerCase().includes(filter.toLowerCase()) || r.domain.toLowerCase().includes(filter.toLowerCase());
+    return match;
+  });
+  body.innerHTML = rows.map(r=>`
+    <tr>
+      <td><div style="font-weight:600;font-size:12px;max-width:320px;line-height:1.4">${r.name}</div></td>
+      <td>${domainTag[r.domain]||r.domain}</td>
+      <td style="font-size:12px;color:var(--dim);white-space:nowrap">${r.entity}</td>
+      <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--muted)">${r.code}</span></td>
+      <td style="font-size:12px;white-space:nowrap">${r.owner}</td>
+      <td>${severityDot[r.severity]||r.severity}</td>
+      <td>${statusBadge[r.status]||r.status}</td>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${r.date}</td>
+      <td><button class="btn btn-ghost" style="padding:4px 9px;font-size:11px" onclick="alert('Opening ${r.code}...')">View →</button></td>
+    </tr>`).join('');
+}
+function filterTable(v){ renderTable(v); }
+function setTab(tab){
+  currentTab=tab;
+  ['active','resolved','all'].forEach(t=>{
+    document.getElementById('tab-'+t).className = 'chip '+(t===tab?'chip-active':'chip-inactive');
+  });
+  renderTable();
+}
+renderTable();
+</script>
+</body>
+</html>

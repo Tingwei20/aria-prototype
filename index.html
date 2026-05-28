@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Command Center</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html">
+    <div class="sb-logo-icon">AR</div>
+    <div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div>
+  </a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link active" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom">
+    <div class="sb-avatar">JJ</div>
+    <div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div>
+  </div>
+</nav>
+
+<!-- ── Main ─────────────────────────────────────────────────────────────── -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb">
+      <span>🏠</span><span class="sep">/</span>
+      <span class="cur">Command Center</span>
+    </div>
+    <div class="tb-right">
+      <span class="tb-time" id="clock">--:--:-- SGT</span>
+      <div class="icon-btn" title="Notifications">🔔<div class="notif-dot"></div></div>
+      <button class="btn btn-primary" onclick="refreshBrief()">⟳ Refresh Brief</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">ARIA Command Center</div>
+        <div class="page-sub">LIVE OSINT — SINGAPORE · Adaptive Risk Intelligence & Anomaly Platform · <span style="color:var(--success);font-weight:600">● All systems operational</span></div>
+      </div>
+      <div class="flex gap8">
+        <button class="btn btn-ghost">⊞ Domains</button>
+        <button class="btn btn-ghost">▽ Filter</button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--primary)"></div>Signals (90d)</div>
+        <div class="kpi-value" style="color:var(--primary)">2,847</div>
+        <div class="kpi-trend trend-up">↑ 12% vs prior 90d</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--danger)"></div>Critical / High</div>
+        <div class="kpi-value" style="color:var(--danger)">164</div>
+        <div class="kpi-trend trend-up">↑ 8 new today</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--warning)"></div>Active Anomalies</div>
+        <div class="kpi-value" style="color:var(--warning)">23</div>
+        <div class="kpi-trend trend-up">↑ 3 escalated</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--purple)"></div>Deepfake / Synthetic</div>
+        <div class="kpi-value" style="color:var(--purple)">94</div>
+        <div class="kpi-trend trend-up">↑ 6% this week</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--success)"></div>Last 24 Hours</div>
+        <div class="kpi-value" style="color:var(--success)">31</div>
+        <div class="kpi-trend trend-dn">↓ 4 vs yesterday</div>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="g60 mb14">
+
+      <!-- Left: Domain Health + Timeline -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Domain Health -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">⬡ Risk Domain Health <span class="card-badge cb-live" style="margin-left:4px">LIVE</span></div>
+            <a href="#" class="fs11 text-muted" style="text-decoration:none;color:var(--primary)">View all →</a>
+          </div>
+          <div class="card-body" style="padding-bottom:10px">
+            <a class="domain-item" href="ns-sentiment.html">
+              <div class="di-icon" style="background:rgba(59,130,246,.15);color:#60A5FA">💬</div>
+              <div class="di-info"><div class="di-name">NS Public Sentiment</div><div class="di-count">3 anomalies · INVESTIGATE tier</div></div>
+              <div class="di-status st-warning"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(139,92,246,.15);color:#A78BFA">🎭</div>
+              <div class="di-info"><div class="di-name">Deepfake & Synthetic Media</div><div class="di-count">94 signals · 2 escalated</div></div>
+              <div class="di-status st-critical"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(239,68,68,.15);color:#F87171">⚠️</div>
+              <div class="di-info"><div class="di-name">Information Operations</div><div class="di-count">15 campaigns · 1 critical</div></div>
+              <div class="di-status st-critical"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(16,185,129,.15);color:#34D399">🏥</div>
+              <div class="di-info"><div class="di-name">Health & Safety Monitoring</div><div class="di-count">2 anomalies · WATCH tier</div></div>
+              <div class="di-status st-watch"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(245,158,11,.15);color:#FCD34D">🔒</div>
+              <div class="di-info"><div class="di-name">Cybersecurity Intelligence</div><div class="di-count">7 indicators · monitoring</div></div>
+              <div class="di-status st-watch"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(20,184,166,.15);color:#2DD4BF">💰</div>
+              <div class="di-info"><div class="di-name">Procurement Integrity</div><div class="di-count">1 anomaly · WATCH tier</div></div>
+              <div class="di-status st-monitor"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(249,115,22,.15);color:#FB923C">🛡️</div>
+              <div class="di-info"><div class="di-name">Threat Detection</div><div class="di-count">All clear · 0 anomalies</div></div>
+              <div class="di-status st-normal"></div>
+            </a>
+            <a class="domain-item" href="#">
+              <div class="di-icon" style="background:rgba(99,102,241,.15);color:#818CF8">👤</div>
+              <div class="di-info"><div class="di-name">Personnel Risk</div><div class="di-count">All clear · 0 anomalies</div></div>
+              <div class="di-status st-normal"></div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Anomaly Timeline -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">↗ Anomaly Signal Timeline — 30 Days</div>
+            <div class="flex gap8">
+              <span class="chip chip-active fs11">30d</span>
+              <span class="chip chip-inactive fs11">7d</span>
+              <span class="chip chip-inactive fs11">90d</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="height:200px">
+              <canvas id="timelineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: AI Brief + Alerts -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- AI Brief -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">✦ AI Intelligence Brief <span class="card-badge cb-ai" style="margin-left:4px">ARIA · Claude API</span></div>
+          </div>
+          <div class="card-body" style="padding-bottom:12px">
+            <div class="ai-brief">
+              <div class="ai-brief-hdr">
+                <div>
+                  <div class="ai-brief-title">Daily Intelligence Summary</div>
+                  <div style="font-size:10.5px;color:var(--muted);margin-top:2px">Singapore-wide · 2,847 signals · Generated 07:02 SGT</div>
+                </div>
+              </div>
+              <div class="ai-brief-item">
+                <div class="ai-num">1</div>
+                <div><strong>Deepfake SAF Commander Video:</strong> A synthetic video impersonating a senior SAF officer circulating across Telegram channels has reached 94,000 views. Coordinated amplification pattern detected — 3 seeder accounts flagged. Recommend immediate takedown coordination.</div>
+              </div>
+              <div class="ai-brief-item">
+                <div class="ai-num">2</div>
+                <div><strong>NS Sentiment Pressure — Economic Trigger:</strong> Recent Straits Times and Reddit discourse shows elevated anxiety around retrenchment and NS employability linkage following major MNC layoff announcements. Sentiment on Civilian Employability dimension now 8.3% below IPS baseline. Environmental pressure indicators in ELEVATED state.</div>
+              </div>
+              <div class="ai-brief-item">
+                <div class="ai-num">3</div>
+                <div><strong>Novel Narrative — "NS Inequality" Frame:</strong> A previously marginal narrative (historical prevalence: 1.8%) linking NS burden to income inequality has reached 14.2% frame prevalence across EDMW and r/NationalServiceSG in the past 7 days. Organic amplification unclear — coordination analysis in progress.</div>
+              </div>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Recommended Actions</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px 10px;background:var(--danger-g);border:1px solid rgba(239,68,68,.2);border-radius:7px">
+                <span style="color:var(--danger);font-weight:700;flex-shrink:0">🔴</span> Escalate deepfake video to Digital Intelligence Service for takedown coordination within 4 hours.
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px 10px;background:var(--warning-g);border:1px solid rgba(245,158,11,.2);border-radius:7px">
+                <span style="color:var(--warning);font-weight:700;flex-shrink:0">🟡</span> Brief Nexus team on NS inequality narrative for curriculum adjustment consideration.
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:8px 10px;background:var(--primary-g);border:1px solid rgba(59,130,246,.2);border-radius:7px">
+                <span style="color:var(--primary);font-weight:700;flex-shrink:0">🔵</span> Monitor MNC layoff discourse — tighten NS Employability threshold from σ2.5 to σ2.0 for next 14 days.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">🔔 Recent Alerts</div>
+            <a href="board.html" style="font-size:11px;color:var(--primary);text-decoration:none;font-weight:600">View board →</a>
+          </div>
+          <div class="card-body" style="padding-top:8px;padding-bottom:8px">
+            <div class="alert-item">
+              <div class="alert-bar ab-critical"></div>
+              <div class="alert-content">
+                <div class="alert-title">Deepfake SAF Commander video — coordinated amplification</div>
+                <div class="alert-meta"><span class="tag tag-deepfake">Deepfake</span> ESCALATE · 3 min ago</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-bar ab-high"></div>
+              <div class="alert-content">
+                <div class="alert-title">"NS Inequality" narrative spike: 1.8% → 14.2% frame prevalence</div>
+                <div class="alert-meta"><span class="tag tag-sentiment">NS Sentiment</span> INVESTIGATE · 47 min ago</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-bar ab-high"></div>
+              <div class="alert-content">
+                <div class="alert-title">Employability dimension: −8.3% vs IPS baseline (sustained 9 days)</div>
+                <div class="alert-meta"><span class="tag tag-sentiment">NS Sentiment</span> INVESTIGATE · 2h ago</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-bar ab-critical"></div>
+              <div class="alert-content">
+                <div class="alert-title">IO Campaign: Coordinated anti-NS content seeding across 4 platforms</div>
+                <div class="alert-meta"><span class="tag tag-info-ops">Info Ops</span> ESCALATE · 4h ago</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-bar ab-medium"></div>
+              <div class="alert-content">
+                <div class="alert-title">SAF camp medical report: elevated heat injury cluster — Kranji Training Area</div>
+                <div class="alert-meta"><span class="tag tag-health">Health & Safety</span> WATCH · 6h ago</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-bar ab-medium"></div>
+              <div class="alert-content">
+                <div class="alert-title">Procurement anomaly: bid pattern deviation in RSAF equipment tender</div>
+                <div class="alert-meta"><span class="tag tag-procurement">Procurement</span> WATCH · 11h ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /grid -->
+
+    <!-- Domain Signal Chart (full-width) -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">◈ Domain Signal Distribution — Last 30 Days</div>
+        <div class="card-badge cb-info">MULTI-DOMAIN VIEW</div>
+      </div>
+      <div class="card-body">
+        <div style="height:180px">
+          <canvas id="domainChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// Clock
+function updateClock(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-SG',{hour12:false,timeZone:'Asia/Singapore'});
+  document.getElementById('clock').textContent = t + ' SGT';
+}
+updateClock(); setInterval(updateClock,1000);
+
+// Timeline Chart
+const tlCtx = document.getElementById('timelineChart').getContext('2d');
+const days = Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.toLocaleDateString('en-SG',{month:'short',day:'numeric'});});
+new Chart(tlCtx,{
+  type:'line',
+  data:{
+    labels:days,
+    datasets:[
+      {label:'NS Sentiment',data:[12,18,14,22,19,25,21,30,27,18,14,16,20,24,28,32,29,22,18,25,31,27,24,20,22,28,35,31,26,33],borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+      {label:'Deepfake',data:[8,10,12,9,14,11,16,13,18,15,20,22,18,16,22,25,28,24,20,26,30,28,32,35,29,34,38,35,31,37],borderColor:'#8B5CF6',backgroundColor:'rgba(139,92,246,.06)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+      {label:'Info Ops',data:[5,6,8,7,9,11,8,10,12,9,14,12,16,13,18,15,20,17,14,16,18,20,22,19,21,24,22,26,23,28],borderColor:'#F97316',backgroundColor:'rgba(249,115,22,.06)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+      {label:'Health & Safety',data:[3,2,4,3,5,4,6,5,4,6,3,5,7,6,8,5,7,6,8,7,9,8,6,7,8,9,7,8,6,7],borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.05)',fill:true,tension:.4,pointRadius:0,borderWidth:2},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{color:'#94A3B8',font:{size:11},boxWidth:12,padding:16}},tooltip:{backgroundColor:'#0D1424',borderColor:'#1E2D4A',borderWidth:1,titleColor:'#E2E8F0',bodyColor:'#94A3B8',padding:10}},
+    scales:{
+      x:{grid:{color:'rgba(30,45,74,.4)'},ticks:{color:'#4B5E7A',font:{size:10},maxTicksLimit:10}},
+      y:{grid:{color:'rgba(30,45,74,.4)'},ticks:{color:'#4B5E7A',font:{size:10}},beginAtZero:true}
+    }
+  }
+});
+
+// Domain Bar Chart
+const domCtx = document.getElementById('domainChart').getContext('2d');
+new Chart(domCtx,{
+  type:'bar',
+  data:{
+    labels:['NS Sentiment','Deepfake & Synthetic','Info Operations','Health & Safety','Cyber Intel','Procurement','Threat Detection','Personnel Risk'],
+    datasets:[
+      {label:'Critical/High',data:[48,94,67,12,38,8,4,6],backgroundColor:'rgba(239,68,68,.7)',borderRadius:4},
+      {label:'Medium',data:[72,44,38,18,29,15,12,9],backgroundColor:'rgba(245,158,11,.6)',borderRadius:4},
+      {label:'Low/Watch',data:[112,68,54,22,41,19,18,14],backgroundColor:'rgba(59,130,246,.5)',borderRadius:4},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:'#94A3B8',font:{size:11},boxWidth:12,padding:16}},tooltip:{backgroundColor:'#0D1424',borderColor:'#1E2D4A',borderWidth:1,titleColor:'#E2E8F0',bodyColor:'#94A3B8',padding:10}},
+    scales:{
+      x:{stacked:true,grid:{display:false},ticks:{color:'#4B5E7A',font:{size:11}}},
+      y:{stacked:true,grid:{color:'rgba(30,45,74,.4)'},ticks:{color:'#4B5E7A',font:{size:10}},beginAtZero:true}
+    }
+  }
+});
+
+function refreshBrief(){
+  const btn=document.querySelector('.btn-primary');
+  btn.textContent='⟳ Refreshing...';
+  setTimeout(()=>{btn.textContent='⟳ Refresh Brief';},2000);
+}
+</script>
+</body>
+</html>

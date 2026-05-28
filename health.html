@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Risk Health</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link active" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><span class="cur">Risk Health</span></div>
+    <div class="tb-right">
+      <button class="btn btn-ghost">⬇ Export Report</button>
+      <a href="registry.html" class="btn btn-primary">Risk Management →</a>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <div class="page-title">Risk Health Dashboard</div>
+      <div class="page-sub">MINDEF HEADQUARTERS · 16 total risks · Portfolio health: <span style="color:var(--warning);font-weight:700">DEGRADING</span></div>
+    </div>
+
+    <!-- KPI Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--danger)"></div>Portfolio Risk Score</div>
+        <div class="kpi-value" style="color:var(--warning)">6.4<span style="font-size:16px;color:var(--muted)">/10</span></div>
+        <div class="kpi-trend trend-up">↑ +0.8 vs last quarter</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--danger)"></div>Escalated Risks</div>
+        <div class="kpi-value" style="color:var(--danger)">3</div>
+        <div class="kpi-trend trend-up">↑ +2 this month</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--warning)"></div>Under Investigation</div>
+        <div class="kpi-value" style="color:var(--warning)">7</div>
+        <div class="kpi-trend trend-up">↑ +3 this week</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label"><div class="kpi-dot" style="background:var(--success)"></div>Avg Resolution Time</div>
+        <div class="kpi-value" style="color:var(--success)">4.2<span style="font-size:16px;color:var(--muted)">d</span></div>
+        <div class="kpi-trend trend-dn">↓ −1.1d vs last month</div>
+      </div>
+    </div>
+
+    <div class="g60 mb14">
+      <!-- Risk trajectory chart -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">↗ Risk Portfolio Trajectory — 6 Months</div>
+          <div class="card-badge cb-warn">WORSENING TREND</div>
+        </div>
+        <div class="card-body"><div style="height:220px"><canvas id="trajectoryChart"></canvas></div></div>
+      </div>
+
+      <!-- Domain health bars -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">◈ Domain Health Scores</div>
+          <span style="font-size:11px;color:var(--muted)">Lower = higher risk exposure</span>
+        </div>
+        <div class="card-body" id="domain-health-bars"></div>
+      </div>
+    </div>
+
+    <div class="g2 mb14">
+      <!-- Detection performance -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">⚡ ARIA Detection Performance</div>
+          <span class="card-badge cb-live">LIVE METRICS</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div class="flex-between mb14" style="margin-bottom:6px"><span class="fs12 fw700">Alert Precision</span><span class="fs12 fw700" style="color:var(--success)">87.3%</span></div>
+            <div class="gauge-bar" style="height:10px"><div class="gauge-fill" style="width:87.3%;background:linear-gradient(90deg,var(--success),#34D399)"></div></div>
+            <div class="fs11 text-muted" style="margin-top:4px">Target: >85% · Exceeding target by 2.3pp</div>
+          </div>
+          <div>
+            <div class="flex-between" style="margin-bottom:6px"><span class="fs12 fw700">Recall (True Positive Rate)</span><span class="fs12 fw700" style="color:var(--success)">82.1%</span></div>
+            <div class="gauge-bar" style="height:10px"><div class="gauge-fill" style="width:82.1%;background:linear-gradient(90deg,var(--success),#34D399)"></div></div>
+            <div class="fs11 text-muted" style="margin-top:4px">Target: >75% · Exceeding target by 7.1pp</div>
+          </div>
+          <div>
+            <div class="flex-between" style="margin-bottom:6px"><span class="fs12 fw700">Mean Time to Detect (MTTD)</span><span class="fs12 fw700" style="color:var(--primary)">3.2 min</span></div>
+            <div class="gauge-bar" style="height:10px"><div class="gauge-fill" style="width:96%;background:linear-gradient(90deg,var(--primary),#60A5FA)"></div></div>
+            <div class="fs11 text-muted" style="margin-top:4px">Target: &lt;5 min · Well within threshold</div>
+          </div>
+          <div>
+            <div class="flex-between" style="margin-bottom:6px"><span class="fs12 fw700">RIL Autonomous Adjustments (30d)</span><span class="fs12 fw700" style="color:var(--purple)">47</span></div>
+            <div class="gauge-bar" style="height:10px"><div class="gauge-fill" style="width:65%;background:var(--purple)"></div></div>
+            <div class="fs11 text-muted" style="margin-top:4px">38 auto-approved · 9 human-reviewed</div>
+          </div>
+          <div style="height:1px;background:var(--border)"></div>
+          <div class="flex-between">
+            <div style="text-align:center;flex:1">
+              <div style="font-size:22px;font-weight:800;color:var(--success)">2,847</div>
+              <div class="fs11 text-muted">Signals ingested (90d)</div>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div style="text-align:center;flex:1">
+              <div style="font-size:22px;font-weight:800;color:var(--warning)">164</div>
+              <div class="fs11 text-muted">Alerts generated</div>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div style="text-align:center;flex:1">
+              <div style="font-size:22px;font-weight:800;color:var(--primary)">23</div>
+              <div class="fs11 text-muted">Active anomalies</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analyst productivity -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">📊 Analyst Productivity Gains (vs Manual Baseline)</div>
+          <span class="card-badge cb-ai">AI-ASSISTED</span>
+        </div>
+        <div class="card-body"><div style="height:290px"><canvas id="productivityChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- Risk breakdown by domain -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">⊞ Risk Breakdown by Domain & Severity</div>
+        <span style="font-size:11px;color:var(--muted)">Active risks only · Click domain to drill down</span>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead><tr><th>Domain</th><th>Critical</th><th>High</th><th>Medium</th><th>Watch</th><th>Total</th><th>Trend</th><th>Health</th></tr></thead>
+          <tbody>
+            <tr onclick="window.location='ns-sentiment.html'" style="cursor:pointer">
+              <td><span class="tag tag-sentiment">NS Sentiment</span></td>
+              <td style="color:var(--danger);font-weight:700">1</td><td style="color:var(--warning);font-weight:700">2</td><td>2</td><td>1</td><td style="font-weight:700">6</td>
+              <td style="color:var(--danger)">↑ Worsening</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:40%;height:100%;background:var(--warning);border-radius:3px"></div></div></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-deepfake">Deepfake</span></td>
+              <td style="color:var(--danger);font-weight:700">1</td><td style="color:var(--warning);font-weight:700">1</td><td>1</td><td>0</td><td style="font-weight:700">3</td>
+              <td style="color:var(--danger)">↑ Worsening</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:30%;height:100%;background:var(--danger);border-radius:3px"></div></div></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-info-ops">Info Ops</span></td>
+              <td style="color:var(--danger);font-weight:700">1</td><td style="color:var(--warning);font-weight:700">2</td><td>0</td><td>0</td><td style="font-weight:700">3</td>
+              <td style="color:var(--danger)">↑ Worsening</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:25%;height:100%;background:var(--danger);border-radius:3px"></div></div></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-cyber">Cyber Intel</span></td>
+              <td>0</td><td style="color:var(--warning);font-weight:700">1</td><td>2</td><td>0</td><td style="font-weight:700">3</td>
+              <td style="color:var(--warning)">→ Stable</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:55%;height:100%;background:var(--primary);border-radius:3px"></div></div></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-health">Health & Safety</span></td>
+              <td>0</td><td style="color:var(--warning);font-weight:700">1</td><td>1</td><td>0</td><td style="font-weight:700">2</td>
+              <td style="color:var(--warning)">→ Monitoring</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:60%;height:100%;background:var(--warning);border-radius:3px"></div></div></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-procurement">Procurement</span></td>
+              <td>0</td><td>0</td><td>1</td><td>0</td><td style="font-weight:700">1</td>
+              <td style="color:var(--success)">↓ Improving</td>
+              <td><div style="width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden"><div style="width:78%;height:100%;background:var(--success);border-radius:3px"></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Trajectory Chart
+const months6 = ["Dec","Jan","Feb","Mar","Apr","May"];
+const ctx1 = document.getElementById("trajectoryChart").getContext("2d");
+new Chart(ctx1,{type:"line",data:{labels:months6,datasets:[
+  {label:"Escalated",data:[0,1,1,2,2,3],borderColor:"#EF4444",backgroundColor:"rgba(239,68,68,.1)",fill:true,tension:.4,pointRadius:4,borderWidth:2.5},
+  {label:"Investigating",data:[2,2,3,4,5,7],borderColor:"#F59E0B",backgroundColor:"rgba(245,158,11,.08)",fill:true,tension:.4,pointRadius:4,borderWidth:2},
+  {label:"Watching",data:[4,5,5,6,6,6],borderColor:"#3B82F6",backgroundColor:"rgba(59,130,246,.06)",fill:true,tension:.4,pointRadius:4,borderWidth:2},
+]},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{position:"bottom",labels:{color:"#94A3B8",font:{size:11},boxWidth:12,padding:14}},
+    tooltip:{backgroundColor:"#0D1424",borderColor:"#1E2D4A",borderWidth:1,padding:10}},
+  scales:{x:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:11}}},
+    y:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:10}},beginAtZero:true,stepSize:1}}}});
+
+// Domain health bars
+const domains = [
+  {name:"NS Public Sentiment",score:40,color:"#F59E0B"},
+  {name:"Deepfake & Synthetic Media",score:30,color:"#EF4444"},
+  {name:"Information Operations",score:25,color:"#EF4444"},
+  {name:"Health & Safety",score:62,color:"#F59E0B"},
+  {name:"Cybersecurity Intel",score:55,color:"#3B82F6"},
+  {name:"Procurement Integrity",score:78,color:"#10B981"},
+  {name:"Threat Detection",score:88,color:"#10B981"},
+  {name:"Personnel Risk",score:85,color:"#10B981"},
+];
+const dhb = document.getElementById("domain-health-bars");
+domains.forEach(d=>{
+  dhb.innerHTML+=`<div class="hc-row">
+    <div class="hc-label">${d.name}</div>
+    <div class="hc-bar-wrap"><div class="hc-bar" style="width:${d.score}%;background:${d.color}"></div></div>
+    <div class="hc-val" style="color:${d.color}">${d.score}</div>
+    <div class="hc-trend" style="color:${d.score<50?'var(--danger)':d.score<70?'var(--warning)':'var(--success)'}">${d.score<50?'↑ High risk':d.score<70?'→ Moderate':'✓ Healthy'}</div>
+  </div>`;
+});
+
+// Productivity bar chart
+const ctx2 = document.getElementById("productivityChart").getContext("2d");
+new Chart(ctx2,{type:"bar",data:{
+  labels:["Sources\nMonitored","Alert\nPrecision","MTTD\n(hours)","Daily Brief\nTime (hrs)","Analyst\nCoverage"],
+  datasets:[
+    {label:"Manual (Before ARIA)",data:[7,27,72,3.5,5],backgroundColor:"rgba(100,116,139,.5)",borderColor:"#64748B",borderWidth:1,borderRadius:4},
+    {label:"With ARIA",data:[50,87,0.05,0.03,50],backgroundColor:"rgba(59,130,246,.7)",borderColor:"#3B82F6",borderWidth:1,borderRadius:4},
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:"bottom",labels:{color:"#94A3B8",font:{size:11},boxWidth:12,padding:12}},
+      tooltip:{backgroundColor:"#0D1424",borderColor:"#1E2D4A",borderWidth:1,padding:10,callbacks:{label:(c)=>`${c.dataset.label}: ${c.parsed.y}`}}},
+    scales:{x:{grid:{display:false},ticks:{color:"#4B5E7A",font:{size:10}}},
+      y:{grid:{color:"rgba(30,45,74,.4)"},ticks:{color:"#4B5E7A",font:{size:10}},beginAtZero:true}}}});
+</script>
+</body>
+</html>
