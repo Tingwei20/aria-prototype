@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Risk Intelligence Layer</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.ril-function-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.ril-func-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px;position:relative;overflow:hidden}
+.ril-func-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.ril-func-card.fn-auto::before{background:var(--success)}
+.ril-func-card.fn-human::before{background:var(--warning)}
+.ril-func-card.fn-config::before{background:var(--primary)}
+.ril-func-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.ril-fn-num{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.ril-fn-title{font-size:13px;font-weight:700;color:var(--text);line-height:1.3}
+.ril-mode-badge{font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:12px;white-space:nowrap;letter-spacing:.04em;flex-shrink:0}
+.mode-auto{background:rgba(16,185,129,.18);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.mode-human{background:rgba(245,158,11,.18);color:var(--warning);border:1px solid rgba(245,158,11,.3)}
+.ril-fn-stat{font-size:11px;color:var(--dim);line-height:1.6;margin-bottom:12px}
+.ril-fn-stat strong{color:var(--text)}
+.ril-fn-footer{font-size:10.5px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;margin-top:auto}
+.ril-fn-footer .positive{color:var(--success)}
+.ril-fn-footer .warning-text{color:var(--warning)}
+
+.domain-config-table{width:100%;border-collapse:collapse}
+.domain-config-table th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface3)}
+.domain-config-table td{font-size:12px;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.domain-config-table tr:last-child td{border-bottom:none}
+.domain-config-table tr:hover td{background:var(--surface3)}
+.mode-toggle{display:inline-flex;align-items:center;gap:6px;background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:10.5px;cursor:pointer;transition:all .2s}
+.mode-toggle.auto{color:var(--success)}
+.mode-toggle.human{color:var(--warning)}
+.drift-bar-wrap{display:flex;align-items:center;gap:8px}
+.drift-bar-bg{background:var(--surface3);border-radius:4px;height:6px;flex:1;overflow:hidden}
+.drift-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.drift-val{font-size:11px;color:var(--dim);white-space:nowrap;width:45px;text-align:right}
+
+.pending-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;border-left:3px solid var(--warning)}
+.pending-card.critical-pending{border-left-color:var(--danger)}
+.pending-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.pending-domain-fn{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pending-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.4}
+.pending-detail-grid{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;margin-bottom:12px;padding:10px;background:var(--surface3);border-radius:7px}
+.pending-detail-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.pending-detail-val{font-size:12px;color:var(--text)}
+.pending-impact{font-size:11.5px;color:var(--dim);margin-bottom:12px;line-height:1.5}
+.pending-impact strong{color:var(--warning)}
+.pending-actions{display:flex;gap:8px}
+.btn-approve{background:rgba(16,185,129,.15);border:1px solid var(--success);color:var(--success);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-approve:hover{background:rgba(16,185,129,.25)}
+.btn-reject{background:rgba(239,68,68,.1);border:1px solid var(--danger);color:var(--danger);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-reject:hover{background:rgba(239,68,68,.18)}
+.btn-modify{background:rgba(59,130,246,.1);border:1px solid var(--primary);color:var(--primary);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-modify:hover{background:rgba(59,130,246,.18)}
+
+.audit-table{width:100%;border-collapse:collapse}
+.audit-table td{font-size:11.5px;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.audit-table tr:last-child td{border-bottom:none}
+.audit-table tr:hover td{background:var(--surface3)}
+.audit-ts{color:var(--muted);white-space:nowrap;font-family:var(--mono);font-size:10.5px}
+.audit-action{color:var(--text);line-height:1.5}
+.audit-mode-auto{color:var(--success);font-size:10px;font-weight:700}
+.audit-mode-human{color:var(--warning);font-size:10px;font-weight:700}
+.audit-outcome-ok{color:var(--success)}
+.audit-outcome-pending{color:var(--warning)}
+.audit-outcome-rejected{color:var(--danger)}
+
+.arch-diagram{background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:20px;font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.7;overflow-x:auto;margin-bottom:20px}
+.arch-pipeline{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:16px 0}
+.arch-stage{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;position:relative}
+.arch-stage-arrow{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;padding-top:14px}
+.arch-stage-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.arch-stage-title{font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:6px}
+.arch-stage-sub{font-size:9.5px;color:var(--dim);line-height:1.5}
+.arch-stage.data{border-top:2px solid var(--primary)}
+.arch-stage.ingest{border-top:2px solid #8B5CF6}
+.arch-stage.normalise{border-top:2px solid var(--teal)}
+.arch-stage.baseline{border-top:2px solid #0EA5E9}
+.arch-stage.detect{border-top:2px solid var(--warning)}
+.arch-stage.assess{border-top:2px solid var(--danger)}
+.arch-stage.action{border-top:2px solid var(--success)}
+.arch-ril-bar{background:linear-gradient(90deg,rgba(59,130,246,.12),rgba(139,92,246,.12));border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:10px 16px;margin-top:10px;display:flex;gap:20px;align-items:center}
+.arch-ril-label{font-size:11px;font-weight:700;color:var(--primary);white-space:nowrap}
+.arch-ril-fns{display:flex;gap:12px;flex-wrap:wrap}
+.arch-ril-fn{font-size:10.5px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:5px;padding:3px 9px;color:var(--dim)}
+
+.causal-diagram{display:grid;grid-template-rows:auto auto auto auto auto;gap:0;margin-bottom:8px}
+.causal-row{display:flex;align-items:stretch;gap:0;justify-content:center;position:relative}
+.causal-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;text-align:center;flex:1;max-width:700px}
+.causal-box.env-trigger{border-top:2px solid var(--danger);max-width:700px}
+.causal-box.env-pressure{border-top:2px solid var(--warning);max-width:700px}
+.causal-box.ns-impact{border-top:2px solid var(--primary);max-width:700px}
+.causal-box.io-layer{border-top:2px dashed #8B5CF6;max-width:700px;background:rgba(139,92,246,.06)}
+.causal-box-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.causal-box-items{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.causal-item{font-size:10.5px;background:var(--surface3);border:1px solid var(--border);border-radius:5px;padding:3px 9px;color:var(--dim)}
+.causal-paths{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:700px;margin:0 auto}
+.causal-path-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px}
+.causal-path-box.path-a{border-top:2px solid #F59E0B}
+.causal-path-box.path-b{border-top:2px solid #EF4444}
+.causal-path-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.causal-path-label.a{color:var(--warning)}
+.causal-path-label.b{color:var(--danger)}
+.causal-path-items{font-size:10.5px;color:var(--dim);line-height:1.8;list-style:none;padding:0;margin:0}
+.causal-path-items li::before{content:"→ ";color:var(--muted)}
+.causal-arrow{text-align:center;color:var(--muted);font-size:20px;line-height:1.2;padding:4px 0}
+.causal-arrow-split{display:flex;justify-content:center;gap:60px;color:var(--muted);font-size:20px;padding:4px 0;max-width:700px;margin:0 auto}
+
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-sm{font-size:14px;font-weight:700;color:var(--text)}
+.section-sub-sm{font-size:11.5px;color:var(--muted);margin-top:2px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.ril-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.ril-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px 16px}
+.ril-kpi-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.ril-kpi-val{font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.ril-kpi-sub{font-size:11px;color:var(--dim)}
+.ril-kpi-val.ok{color:var(--success)}
+.ril-kpi-val.warn{color:var(--warning)}
+.ril-kpi-val.alert{color:var(--danger)}
+
+.tab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{padding:8px 16px;font-size:12.5px;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+.signal-pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:2px 8px;border-radius:10px;font-weight:600}
+.sp-auto{background:rgba(16,185,129,.15);color:var(--success)}
+.sp-human{background:rgba(245,158,11,.15);color:var(--warning)}
+.sp-pending{background:rgba(239,68,68,.15);color:var(--danger)}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link active" href="ril.html"><span class="nav-icon">⟳</span> Risk Intel Layer <span class="nav-badge nb-orange">3</span></a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="#"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><span class="cur">Risk Intelligence Layer</span></div>
+    <div class="tb-right">
+      <span style="font-size:11px;color:var(--muted);margin-right:8px">Last calibration cycle: <strong style="color:var(--text)" id="last-cal"></strong></span>
+      <button class="btn btn-ghost" onclick="alert('Triggering manual RIL calibration run...')">⟳ Run Calibration</button>
+      <button class="btn btn-primary" onclick="alert('Opening RIL governance config...')">⊙ Configure</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">Risk Intelligence Layer</div>
+        <div class="page-sub">Adaptive governance engine — managing baselines, thresholds, and risk posture across <strong style="color:var(--text)">8 active domains</strong> · <span id="ts"></span></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="signal-pill sp-pending">⚠ 3 Decisions Pending</span>
+        <span class="signal-pill sp-auto">✓ 47 Autonomous Actions (30d)</span>
+      </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="ril-kpi-grid">
+      <div class="ril-kpi">
+        <div class="ril-kpi-label">Domains Under RIL</div>
+        <div class="ril-kpi-val ok">8</div>
+        <div class="ril-kpi-sub">All domains active</div>
+      </div>
+      <div class="ril-kpi">
+        <div class="ril-kpi-label">Autonomous Actions (30d)</div>
+        <div class="ril-kpi-val">47</div>
+        <div class="ril-kpi-sub">Within approved bounds</div>
+      </div>
+      <div class="ril-kpi">
+        <div class="ril-kpi-label">Human Reviews (30d)</div>
+        <div class="ril-kpi-val">12</div>
+        <div class="ril-kpi-sub">9 approved · 3 rejected</div>
+      </div>
+      <div class="ril-kpi">
+        <div class="ril-kpi-label">Pending Decisions</div>
+        <div class="ril-kpi-val warn">3</div>
+        <div class="ril-kpi-sub">Awaiting analyst review</div>
+      </div>
+      <div class="ril-kpi">
+        <div class="ril-kpi-label">Alert False Positive Rate</div>
+        <div class="ril-kpi-val ok">13.2%</div>
+        <div class="ril-kpi-sub">↓ from 18.4% (60 days ago)</div>
+      </div>
+    </div>
+
+    <!-- RIL Tabs -->
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('overview')">System Overview</button>
+      <button class="tab-btn" onclick="switchTab('pending')">Pending Decisions <span style="background:var(--danger);color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:4px">3</span></button>
+      <button class="tab-btn" onclick="switchTab('domains')">Domain Configuration</button>
+      <button class="tab-btn" onclick="switchTab('audit')">Audit Log</button>
+      <button class="tab-btn" onclick="switchTab('architecture')">Architecture</button>
+    </div>
+
+    <!-- TAB: OVERVIEW -->
+    <div class="tab-pane active" id="tab-overview">
+
+      <!-- 4 RIL Function Cards -->
+      <div class="ril-function-grid">
+
+        <div class="ril-func-card fn-auto">
+          <div class="ril-func-header">
+            <div>
+              <div class="ril-fn-num">Function 1</div>
+              <div class="ril-fn-title">Continuous Baseline Recalibration</div>
+            </div>
+            <span class="ril-mode-badge mode-auto">AUTONOMOUS</span>
+          </div>
+          <div class="ril-fn-stat">
+            Applies Bayesian updating to sentiment baselines as new survey data and OSINT accumulates. Maintains calibrated reference points for all active dimensions.<br><br>
+            <strong>Last run:</strong> 2h 14m ago<br>
+            <strong>Last update:</strong> NS Defence Necessity <span style="color:var(--success)">+0.2pp</span> (Bayesian update, 15 May survey batch)<br>
+            <strong>Domains recalibrated:</strong> 3 of 8 (NS Sentiment, Info Ops, H&S)
+          </div>
+          <div class="ril-fn-footer">
+            <span class="positive">✓ 31 autonomous recalibrations</span> in 30 days · Max bound: ±2pp/cycle · 0 bound breaches
+          </div>
+        </div>
+
+        <div class="ril-func-card fn-human">
+          <div class="ril-func-header">
+            <div>
+              <div class="ril-fn-num">Function 2</div>
+              <div class="ril-fn-title">Dynamic Threshold Adjustment</div>
+            </div>
+            <span class="ril-mode-badge mode-human">HUMAN-IN-LOOP</span>
+          </div>
+          <div class="ril-fn-stat">
+            Monitors alert quality (dismissal rate, analyst feedback) and proposes threshold adjustments to optimise signal-to-noise ratio. All proposals require analyst approval before implementation.<br><br>
+            <strong>Proposals pending:</strong> <span style="color:var(--warning)">2</span><br>
+            <strong>Last accepted:</strong> 22 May — NS Employability amber: 1.5σ → 1.7σ (−38% alert vol, +2% missed rate)<br>
+            <strong>Last rejected:</strong> 18 May — Cyber amber widening (rejected: elevated threat environment)
+          </div>
+          <div class="ril-fn-footer">
+            <span class="warning-text">⚠ 2 proposals awaiting review</span> · 9 accepted / 3 rejected (30d) · Avg review time: 4.2h
+          </div>
+        </div>
+
+        <div class="ril-func-card fn-human">
+          <div class="ril-func-header">
+            <div>
+              <div class="ril-fn-num">Function 3</div>
+              <div class="ril-fn-title">Environmental Pressure Response</div>
+            </div>
+            <span class="ril-mode-badge mode-human">HUMAN-IN-LOOP</span>
+          </div>
+          <div class="ril-fn-stat">
+            Proactively adjusts risk posture when Tier 1 environmental indicators enter elevated states — before any NS sentiment impact has occurred. Requires approval because causal model is probabilistic.<br><br>
+            <strong>Current status:</strong> <span style="color:var(--warning)">ELEVATED</span> — Economic confidence HIGH (72%)<br>
+            <strong>Action taken:</strong> NS Sentiment amber threshold tightened 0.2σ (approved 24 May by LTC Bryan Lim)<br>
+            <strong>Pending:</strong> <span style="color:var(--warning)">1 posture proposal</span> — geopolitical response
+          </div>
+          <div class="ril-fn-footer">
+            <span class="warning-text">⚠ 1 proposal awaiting review</span> · Causal model confidence: 74% · Propagation lag: 2–5 weeks
+          </div>
+        </div>
+
+        <div class="ril-func-card fn-config">
+          <div class="ril-func-header">
+            <div>
+              <div class="ril-fn-num">Function 4</div>
+              <div class="ril-fn-title">Governance Configuration</div>
+            </div>
+            <span class="ril-mode-badge" style="background:rgba(59,130,246,.15);color:var(--primary);border:1px solid rgba(59,130,246,.3)">CONFIG</span>
+          </div>
+          <div class="ril-fn-stat">
+            Stakeholder-defined governance settings per domain and per function. Controls maximum autonomous adjustment bounds, mandatory human-review triggers, audit requirements, and rollback capabilities.<br><br>
+            <strong>Active domains:</strong> 8 · <strong>Total dimensions:</strong> 42<br>
+            <strong>Autonomous dimensions:</strong> 27 (64%) · <strong>Human-in-loop:</strong> 15 (36%)<br>
+            <strong>Mandatory review triggers:</strong> 3 currently active (multi-dim alert, IO detected, new domain)
+          </div>
+          <div class="ril-fn-footer">
+            Full audit trail · Every autonomous action logged with reasoning · Rollback available (last 90 days)
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts Row -->
+      <div class="two-col" style="margin-bottom:20px">
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title-sm">Baseline Evolution — NS Sentiment</div>
+              <div class="section-sub-sm">12-month Bayesian recalibration history · Key dimensions vs IPS 2022 baseline</div>
+            </div>
+          </div>
+          <canvas id="baselineChart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="section-header">
+            <div>
+              <div class="section-title-sm">RIL Calibration Activity</div>
+              <div class="section-sub-sm">Monthly actions by function type · Autonomous vs human-reviewed</div>
+            </div>
+          </div>
+          <canvas id="calActivityChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Cross-domain RIL summary -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">Cross-Domain Correlation Intelligence</div>
+            <div class="section-sub-sm">Patterns detected by RIL spanning multiple domains — invisible to siloed monitoring</div>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">Updated 1h ago</span>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>Correlation Pattern</th>
+            <th>Domains Linked</th>
+            <th>Detected</th>
+            <th>Confidence</th>
+            <th>RIL Action</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;font-weight:600">Economic stress → emigration discourse → NS Sentiment erosion</td>
+              <td><span class="tag tag-sentiment">NS Sentiment</span> <span class="tag tag-info-ops" style="background:rgba(245,158,11,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.25)">Env. Pressure</span></td>
+              <td style="font-size:11px;color:var(--muted)">24 May 2026</td>
+              <td><span style="color:var(--warning);font-weight:700">74%</span></td>
+              <td style="font-size:11.5px">Tightened NS amber threshold +0.2σ (approved)</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;font-weight:600">Deepfake video → coordinated Telegram amplification → Info Ops spike</td>
+              <td><span class="tag tag-deepfake">Deepfake</span> <span class="tag tag-info-ops">Info Ops</span></td>
+              <td style="font-size:11px;color:var(--muted)">28 May 2026</td>
+              <td><span style="color:var(--danger);font-weight:700">91%</span></td>
+              <td style="font-size:11.5px">Both domains escalated · IO team notified</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;font-weight:600">Heat injuries cluster → family support dimension trending down</td>
+              <td><span class="tag tag-health">Health & Safety</span> <span class="tag tag-sentiment">NS Sentiment</span></td>
+              <td style="font-size:11px;color:var(--muted)">26 May 2026</td>
+              <td><span style="color:var(--warning);font-weight:700">62%</span></td>
+              <td style="font-size:11.5px">Family Support alert tightened · H&S team briefed</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;font-weight:600">Credential harvesting via fake SAF app → personnel risk elevation</td>
+              <td><span class="tag tag-cyber">Cyber Intel</span> <span class="tag tag-procurement">Personnel Risk</span></td>
+              <td style="font-size:11px;color:var(--muted)">23 May 2026</td>
+              <td><span style="color:var(--success);font-weight:700">88%</span></td>
+              <td style="font-size:11.5px">Cyber amber threshold tightened · Staff alert issued</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- TAB: PENDING DECISIONS -->
+    <div class="tab-pane" id="tab-pending">
+
+      <div style="margin-bottom:16px;padding:12px 16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:var(--warning)">3 proposals</strong> are awaiting your review. Human-in-the-loop mode requires analyst approval before the RIL implements changes. Each proposal includes projected impact and evidence.
+      </div>
+
+      <div class="pending-card">
+        <div class="pending-header">
+          <div class="pending-domain-fn">
+            <span class="tag tag-sentiment">NS Sentiment</span>
+            <span style="font-size:10.5px;color:var(--muted)">Function 2: Threshold Adjustment</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">Proposed: 27 May 2026 · 08:42</span>
+        </div>
+        <div class="pending-title">"NS Inequality" narrative frame — amber threshold widening from 1.5σ → 1.8σ</div>
+        <div class="pending-detail-grid">
+          <div>
+            <div class="pending-detail-label">Current Setting</div>
+            <div class="pending-detail-val">Amber at 1.5σ</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Proposed</div>
+            <div class="pending-detail-val">Amber at 1.8σ</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Evidence</div>
+            <div class="pending-detail-val">80% of Watch alerts on this dimension dismissed by analysts in last 14 days (32 of 40 alerts)</div>
+          </div>
+        </div>
+        <div class="pending-impact">
+          <strong>Projected impact if approved:</strong> Est. −41% alert volume on this dimension · +8% missed investigation rate · Net precision improvement: +14pp · Annual analyst time saved: ~22h
+        </div>
+        <div class="pending-actions">
+          <button class="btn-approve" onclick="approveAction(this,'Threshold adjustment approved: NS Inequality amber → 1.8σ')">✓ Approve</button>
+          <button class="btn-modify" onclick="alert('Opening threshold modification dialog...')">✎ Modify</button>
+          <button class="btn-reject" onclick="approveAction(this,'Threshold adjustment rejected: NS Inequality amber retained at 1.5σ')">✕ Reject</button>
+          <button class="btn btn-ghost" style="margin-left:auto" onclick="alert('Showing full evidence chain for this proposal...')">View Evidence →</button>
+        </div>
+      </div>
+
+      <div class="pending-card critical-pending">
+        <div class="pending-header">
+          <div class="pending-domain-fn">
+            <span class="tag tag-sentiment">NS Sentiment</span>
+            <span style="font-size:10.5px;color:var(--muted)">Function 3: Environmental Pressure Response</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">Proposed: 27 May 2026 · 14:17</span>
+        </div>
+        <div class="pending-title">Thai-Cambodia conflict escalation — geopolitical context tightening across NS Sentiment & Info Ops domains</div>
+        <div class="pending-detail-grid">
+          <div>
+            <div class="pending-detail-label">Trigger</div>
+            <div class="pending-detail-val">Geopolitical index: 45% → 68% in 72h</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Proposed Action</div>
+            <div class="pending-detail-val">Tighten amber threshold 0.3σ on NS Defence Necessity and Social Cohesion dimensions</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Historical Precedent</div>
+            <div class="pending-detail-val">Gaza escalation (Oct 2023): geopolitical spike preceded NS discourse surge by 17 days · 82% causal confidence</div>
+          </div>
+        </div>
+        <div class="pending-impact">
+          <strong style="color:var(--danger)">CRITICAL WINDOW:</strong> Causal model projects measurable NS sentiment impact within 10–18 days if geopolitical narrative seeding occurs. <strong>Proactive tightening recommended before impact materialises.</strong> False positive cost: ~18% increase in analyst review load for 2–3 weeks.
+        </div>
+        <div class="pending-actions">
+          <button class="btn-approve" onclick="approveAction(this,'Environmental response approved: geopolitical tightening 0.3σ on Defence Necessity & Social Cohesion')">✓ Approve</button>
+          <button class="btn-modify" onclick="alert('Opening scope modification dialog...')">✎ Modify Scope</button>
+          <button class="btn-reject" onclick="approveAction(this,'Environmental response rejected: monitoring without posture change')">✕ Reject</button>
+          <button class="btn btn-ghost" style="margin-left:auto" onclick="alert('Showing causal pathway analysis...')">View Causal Model →</button>
+        </div>
+      </div>
+
+      <div class="pending-card">
+        <div class="pending-header">
+          <div class="pending-domain-fn">
+            <span class="tag tag-cyber">Cyber Intel</span>
+            <span style="font-size:10.5px;color:var(--muted)">Function 2: Threshold Adjustment</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">Proposed: 26 May 2026 · 09:55</span>
+        </div>
+        <div class="pending-title">Phishing domain mimicry — red zone threshold tightening from 2.5σ → 2.2σ</div>
+        <div class="pending-detail-grid">
+          <div>
+            <div class="pending-detail-label">Current Red Zone</div>
+            <div class="pending-detail-val">2.5σ deviation</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Proposed Red Zone</div>
+            <div class="pending-detail-val">2.2σ deviation</div>
+          </div>
+          <div>
+            <div class="pending-detail-label">Evidence</div>
+            <div class="pending-detail-val">2 of last 4 ARIA-CY incidents initially classified WATCH; both subsequently escalated by analysts within 48h. Earlier detection would have reduced response lag.</div>
+          </div>
+        </div>
+        <div class="pending-impact">
+          <strong>Projected impact if approved:</strong> Est. +23% alert volume on Cyber domain · +35% early escalation rate · Projected response time improvement: −1.8 days per incident · Analyst review cost: ~4h/week additional
+        </div>
+        <div class="pending-actions">
+          <button class="btn-approve" onclick="approveAction(this,'Threshold tightening approved: Cyber red zone → 2.2σ')">✓ Approve</button>
+          <button class="btn-modify" onclick="alert('Opening threshold modification dialog...')">✎ Modify</button>
+          <button class="btn-reject" onclick="approveAction(this,'Threshold tightening rejected: Cyber red zone retained at 2.5σ')">✕ Reject</button>
+          <button class="btn btn-ghost" style="margin-left:auto" onclick="alert('Showing incident review evidence...')">View Incidents →</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB: DOMAIN CONFIGURATION -->
+    <div class="tab-pane" id="tab-domains">
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">Domain RIL Governance Configuration</div>
+            <div class="section-sub-sm">Per-domain mode settings, baseline status, and drift from IPS/historical baselines. New domain onboarding takes 4–8 weeks.</div>
+          </div>
+          <button class="btn btn-primary" onclick="alert('Domain onboarding wizard...')">+ Add Domain</button>
+        </div>
+        <table class="domain-config-table">
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Dimensions</th>
+              <th>Baseline Mode</th>
+              <th>Threshold Mode</th>
+              <th>Env. Response</th>
+              <th>Baseline Drift</th>
+              <th>Last Calibration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="domain-config-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: AUDIT LOG -->
+    <div class="tab-pane" id="tab-audit">
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">RIL Audit Log</div>
+            <div class="section-sub-sm">Immutable record of all RIL actions — autonomous and human-approved. Every decision logged with full reasoning for accountability.</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input type="text" placeholder="🔍 Search log..." style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;width:200px;outline:none">
+            <button class="btn btn-ghost">▽ Filter</button>
+            <button class="btn btn-ghost">↓ Export</button>
+          </div>
+        </div>
+        <table class="audit-table">
+          <thead style="background:var(--surface3)">
+            <tr>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Timestamp</td>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Domain</td>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Function</td>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Action & Reasoning</td>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Mode</td>
+              <td style="font-size:10.5px;font-weight:700;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--border)">Outcome</td>
+            </tr>
+          </thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: ARCHITECTURE -->
+    <div class="tab-pane" id="tab-architecture">
+
+      <!-- Pipeline Diagram -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">ARIA Intelligence Pipeline Architecture</div>
+            <div class="section-sub-sm">Data flows from ingestion through six processing stages before reaching the analyst interface. The RIL governs the pipeline's adaptive behaviour across all active domains.</div>
+          </div>
+        </div>
+
+        <div class="arch-pipeline">
+          <div class="arch-stage data">
+            <div class="arch-stage-label">Sources</div>
+            <div class="arch-stage-title">Data Layer</div>
+            <div class="arch-stage-sub">Social media · News · Parliament · Video · Govt data · Internal feeds</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage ingest">
+            <div class="arch-stage-label">Stage 1</div>
+            <div class="arch-stage-title">Ingest</div>
+            <div class="arch-stage-sub">Kafka streams · REST/WebSocket · Scrapers · Scheduled crawlers</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage normalise">
+            <div class="arch-stage-label">Stage 2</div>
+            <div class="arch-stage-title">Normalise</div>
+            <div class="arch-stage-sub">NLP · Translation · Dedup · Entity extraction · Media transcription</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage baseline">
+            <div class="arch-stage-label">Stage 3</div>
+            <div class="arch-stage-title">Baseline</div>
+            <div class="arch-stage-sub">IPS baselines · Bayesian updating · Rolling quantile models</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage detect">
+            <div class="arch-stage-label">Stage 4</div>
+            <div class="arch-stage-title">Detect</div>
+            <div class="arch-stage-sub">Isolation Forest · LSTM autoencoders · Graph-based coord. detection</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage assess">
+            <div class="arch-stage-label">Stage 5</div>
+            <div class="arch-stage-title">Assess</div>
+            <div class="arch-stage-sub">Risk taxonomy · Severity scoring · LLM reasoning (Claude API)</div>
+          </div>
+          <div class="arch-stage-arrow">→</div>
+          <div class="arch-stage action">
+            <div class="arch-stage-label">Stage 6</div>
+            <div class="arch-stage-title">Action</div>
+            <div class="arch-stage-sub">Alert dispatch · Brief generation · Outbox · Analyst dashboard</div>
+          </div>
+        </div>
+
+        <div class="arch-ril-bar">
+          <div class="arch-ril-label">⟳ RISK INTELLIGENCE LAYER (RIL)</div>
+          <div class="arch-ril-fns">
+            <span class="arch-ril-fn">Fn1: Baseline Recalibration</span>
+            <span class="arch-ril-fn">Fn2: Threshold Adjustment</span>
+            <span class="arch-ril-fn">Fn3: Environmental Response</span>
+            <span class="arch-ril-fn">Fn4: Governance Config</span>
+          </div>
+          <div style="margin-left:auto;font-size:10px;color:var(--muted)">Governs Stages 3–5 · Adapts across all 8 domains</div>
+        </div>
+      </div>
+
+      <!-- Causal Pathway Model -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">Causal Pathway Model — Environmental Pressures to NS Sentiment Erosion</div>
+            <div class="section-sub-sm">The RIL tracks time-lagged correlations across this pathway. Gap between expected organic response and observed response = influence operation detection signal.</div>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">Typical propagation: 2–5 months</span>
+        </div>
+
+        <div class="causal-diagram">
+          <div class="causal-row">
+            <div class="causal-box env-trigger">
+              <div class="causal-box-title" style="color:var(--danger)">Environmental Trigger Events</div>
+              <div class="causal-box-items">
+                <span class="causal-item">MNC layoffs / retrenchment</span>
+                <span class="causal-item">Manufacturing relocation</span>
+                <span class="causal-item">Geopolitical crisis</span>
+                <span class="causal-item">Policy change</span>
+                <span class="causal-item">Training incident</span>
+                <span class="causal-item">Economic stagnation</span>
+              </div>
+            </div>
+          </div>
+          <div class="causal-arrow">↓ 2–4 week lag · RIL Tier 1 monitors here</div>
+          <div class="causal-row">
+            <div class="causal-box env-pressure">
+              <div class="causal-box-title" style="color:var(--warning)">Tier 1 — Environmental Pressure Indicators (Leading Signals)</div>
+              <div class="causal-box-items">
+                <span class="causal-item" style="border-color:rgba(245,158,11,.4);color:var(--warning)">Economic Confidence ↓</span>
+                <span class="causal-item" style="border-color:rgba(245,158,11,.4);color:var(--warning)">Emigration Discourse ↑</span>
+                <span class="causal-item" style="border-color:rgba(245,158,11,.4);color:var(--warning)">Geopolitical Anxiety ↑</span>
+                <span class="causal-item" style="border-color:rgba(245,158,11,.4);color:var(--warning)">Policy Pressure ↑</span>
+              </div>
+            </div>
+          </div>
+          <div class="causal-arrow-split">↙ Path A <span style="width:120px"></span> Path B ↘</div>
+          <div class="causal-paths" style="margin-bottom:8px">
+            <div class="causal-path-box path-a">
+              <div class="causal-path-label a">Path A — Emigration Acceleration</div>
+              <ul class="causal-path-items">
+                <li>PR renunciation discourse rises</li>
+                <li>International schooling inquiries ↑</li>
+                <li>Relocation advisory engagement ↑</li>
+                <li>Departure signalling normalises</li>
+                <li>NS pool depletion risk</li>
+              </ul>
+            </div>
+            <div class="causal-path-box path-b">
+              <div class="causal-path-label b">Path B — Sentiment Erosion (Stayers)</div>
+              <ul class="causal-path-items">
+                <li>"NS is unfair" framing intensifies</li>
+                <li>Social compact questioned</li>
+                <li>Resentment against NS obligation</li>
+                <li>Fairness / inequality narratives surge</li>
+                <li>NS support erosion</li>
+              </ul>
+            </div>
+          </div>
+          <div class="causal-arrow" style="max-width:700px;margin:0 auto">↓ 1–3 months lag · Paths reinforce each other</div>
+          <div class="causal-row">
+            <div class="causal-box ns-impact">
+              <div class="causal-box-title" style="color:var(--primary)">Tier 2 — Direct NS Sentiment Detection (Lagging Signals)</div>
+              <div class="causal-box-items">
+                <span class="causal-item" style="border-color:rgba(59,130,246,.4);color:var(--primary)">Volume anomaly</span>
+                <span class="causal-item" style="border-color:rgba(59,130,246,.4);color:var(--primary)">Sentiment polarity shift</span>
+                <span class="causal-item" style="border-color:rgba(59,130,246,.4);color:var(--primary)">Narrative frame emergence</span>
+                <span class="causal-item" style="border-color:rgba(59,130,246,.4);color:var(--primary)">Cross-platform spike</span>
+              </div>
+            </div>
+          </div>
+          <div class="causal-arrow">⚠ IO detection: gap between expected organic response and observed response</div>
+          <div class="causal-row">
+            <div class="causal-box io-layer">
+              <div class="causal-box-title" style="color:#8B5CF6">Tier 3 — Influence Operation Detection (Amplification Layer)</div>
+              <div class="causal-box-items">
+                <span class="causal-item" style="border-color:rgba(139,92,246,.4);color:#8B5CF6">Grievance amplification (low sophistication)</span>
+                <span class="causal-item" style="border-color:rgba(139,92,246,.4);color:#8B5CF6">Narrative seeding (medium sophistication)</span>
+                <span class="causal-item" style="border-color:rgba(139,92,246,.4);color:#8B5CF6">Strategic erosion (high sophistication)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scalable Domain Architecture -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="section-title-sm">Scalable Domain Architecture — RIL as the Horizontal Intelligence Layer</div>
+            <div class="section-sub-sm">The RIL manages independent baselines and thresholds per domain. Each new domain adds intelligence without new infrastructure. Marginal cost per domain decreases as platform matures.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="domain-arch-grid"></div>
+        <div style="padding:12px 16px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;font-size:12px;color:var(--dim)">
+          <strong style="color:var(--primary)">New domain onboarding:</strong> Configure domain taxonomy · Connect source adapters · Set baseline parameters · Define risk appetite thresholds · Activate RIL governance — <strong style="color:var(--text)">operationalised in 4–8 weeks</strong>. Domains share Risk Board, Registry, Health, and Outbox modules. No changes to the core detection engine required.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('ts').textContent = new Date().toLocaleString('en-SG',{timeZone:'Asia/Singapore',hour12:false});
+document.getElementById('last-cal').textContent = '28 May 2026, 06:00';
+
+// Tab switching
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const tabs=['overview','pending','domains','audit','architecture'];
+    b.classList.toggle('active',tabs[i]===name);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// Approve/reject action handler
+function approveAction(btn, msg){
+  const card = btn.closest('.pending-card');
+  card.style.opacity='0.4';
+  card.style.pointerEvents='none';
+  card.insertAdjacentHTML('beforeend',`<div style="margin-top:10px;font-size:12px;color:var(--success);font-weight:600">✓ ${msg} — logged to audit trail</div>`);
+  document.querySelector('.ril-kpi-val.warn').textContent = Math.max(0, parseInt(document.querySelector('.ril-kpi-val.warn').textContent)-1);
+}
+
+// Domain configuration data
+const domains = [
+  {name:'NS Public Sentiment',icon:'💬',tag:'sentiment',dims:8,baseMode:'autonomous',threshMode:'human',envMode:'human',drift:2.3,driftDir:'down',lastCal:'28 May 06:00',status:'INVESTIGATE'},
+  {name:'Deepfake & Synthetic',icon:'🎭',tag:'deepfake',dims:4,baseMode:'autonomous',threshMode:'human',envMode:'human',drift:0.8,driftDir:'up',lastCal:'28 May 04:15',status:'ESCALATE'},
+  {name:'Information Operations',icon:'⚠️',tag:'info-ops',dims:6,baseMode:'autonomous',threshMode:'human',envMode:'human',drift:3.1,driftDir:'up',lastCal:'28 May 06:00',status:'ESCALATE'},
+  {name:'Health & Safety',icon:'🏥',tag:'health',dims:5,baseMode:'autonomous',threshMode:'autonomous',envMode:'autonomous',drift:1.2,driftDir:'up',lastCal:'28 May 03:30',status:'INVESTIGATE'},
+  {name:'Cybersecurity Intel',icon:'🔒',tag:'cyber',dims:6,baseMode:'autonomous',threshMode:'human',envMode:'autonomous',drift:1.8,driftDir:'up',lastCal:'28 May 05:45',status:'WATCH'},
+  {name:'Procurement Integrity',icon:'💰',tag:'procurement',dims:4,baseMode:'autonomous',threshMode:'autonomous',envMode:'autonomous',drift:0.4,driftDir:'neutral',lastCal:'27 May 18:00',status:'WATCH'},
+  {name:'Threat Detection',icon:'🛡️',tag:'threat',dims:5,baseMode:'autonomous',threshMode:'human',envMode:'human',drift:0.9,driftDir:'neutral',lastCal:'28 May 04:00',status:'WATCH'},
+  {name:'Personnel Risk',icon:'👤',tag:'personnel',dims:4,baseMode:'autonomous',threshMode:'autonomous',envMode:'autonomous',drift:0.3,driftDir:'neutral',lastCal:'27 May 20:00',status:'WATCH'},
+];
+
+const statusColors={ESCALATE:'var(--danger)',INVESTIGATE:'var(--warning)',WATCH:'var(--primary)'};
+const driftColors={up:'var(--danger)',down:'var(--warning)',neutral:'var(--success)'};
+const driftIcons={up:'↑',down:'↓',neutral:'→'};
+
+function renderDomainConfig(){
+  const body=document.getElementById('domain-config-body');
+  body.innerHTML=domains.map(d=>{
+    const driftColor=d.driftDir==='neutral'?'var(--success)':d.drift>2?'var(--danger)':'var(--warning)';
+    return `<tr>
+      <td><span style="margin-right:6px">${d.icon}</span><strong style="font-size:12px">${d.name}</strong></td>
+      <td style="color:var(--muted)">${d.dims}</td>
+      <td><span class="mode-toggle ${d.baseMode}" onclick="toggleMode(this,'${d.name}','Baseline')">${d.baseMode==='autonomous'?'⟳ Autonomous':'👤 Human-in-Loop'}</span></td>
+      <td><span class="mode-toggle ${d.threshMode}" onclick="toggleMode(this,'${d.name}','Threshold')">${d.threshMode==='autonomous'?'⟳ Autonomous':'👤 Human-in-Loop'}</span></td>
+      <td><span class="mode-toggle ${d.envMode}" onclick="toggleMode(this,'${d.name}','Env. Response')">${d.envMode==='autonomous'?'⟳ Autonomous':'👤 Human-in-Loop'}</span></td>
+      <td>
+        <div class="drift-bar-wrap">
+          <div class="drift-bar-bg"><div class="drift-bar-fill" style="width:${Math.min(d.drift*20,100)}%;background:${driftColor}"></div></div>
+          <div class="drift-val" style="color:${driftColor}">${driftIcons[d.driftDir]} ${d.drift}%</div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--muted)">${d.lastCal}</td>
+      <td><span class="status-badge" style="background:${statusColors[d.status]}22;color:${statusColors[d.status]};border:1px solid ${statusColors[d.status]}44;padding:3px 9px;border-radius:4px;font-size:10.5px;font-weight:700">${d.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+function toggleMode(el, domain, fn){
+  const isAuto = el.classList.contains('autonomous');
+  el.classList.toggle('autonomous',!isAuto);
+  el.classList.toggle('human',isAuto);
+  el.textContent = isAuto ? '👤 Human-in-Loop' : '⟳ Autonomous';
+  console.log(`${domain} — ${fn} mode toggled to ${isAuto?'Human-in-Loop':'Autonomous'}`);
+}
+renderDomainConfig();
+
+// Audit log data
+const auditEntries=[
+  {ts:'28 May 14:23',domain:'NS Sentiment',fn:'Fn3: Env. Response',action:'Geopolitical index reached 68% (Thai-Cambodia conflict). Proposing 0.3σ tightening on Defence Necessity & Social Cohesion. Awaiting analyst approval.',mode:'human',outcome:'pending'},
+  {ts:'28 May 11:47',domain:'Info Ops',fn:'Fn1: Baseline Recalibration',action:'Coordinated IO campaign baseline recalibrated: volume baseline +12% (sustained elevated environment). Autonomous adjustment within ±15% approved bound.',mode:'auto',outcome:'ok'},
+  {ts:'28 May 09:02',domain:'Deepfake',fn:'Fn1: Baseline Recalibration',action:'Detection baseline updated: 3 new synthetic media signatures added from confirmed ARIA-DF-001 case study. Bayesian update applied.',mode:'auto',outcome:'ok'},
+  {ts:'27 May 16:30',domain:'NS Sentiment',fn:'Fn2: Threshold Adjustment',action:'Proposal: NS Inequality narrative amber 1.5σ→1.8σ (80% dismissal rate, 14 days). Submitted for analyst review.',mode:'human',outcome:'pending'},
+  {ts:'27 May 14:17',domain:'Cyber',fn:'Fn2: Threshold Adjustment',action:'Proposal: Phishing domain mimicry red zone 2.5σ→2.2σ (2 of 4 recent incidents detected late). Submitted for analyst review.',mode:'human',outcome:'pending'},
+  {ts:'26 May 22:15',domain:'Health & Safety',fn:'Fn1: Baseline Recalibration',action:'Heat injury baseline updated: Kranji Training Area event incorporated. Rolling 90-day baseline recalibrated. Seasonal adjustment applied.',mode:'auto',outcome:'ok'},
+  {ts:'24 May 09:30',domain:'NS Sentiment',fn:'Fn3: Env. Response',action:'Economic Confidence HIGH (72%). Proposed tightening NS amber threshold 0.2σ. Approved by LTC Bryan Lim at 11:12. Applied to Defence Necessity dimension.',mode:'human',outcome:'ok'},
+  {ts:'22 May 15:45',domain:'NS Sentiment',fn:'Fn2: Threshold Adjustment',action:'Civilian Employability amber threshold adjusted 1.5σ→1.7σ. Analyst approval received (LTC Bryan Lim). Applied. Projected −38% alert volume on this dimension.',mode:'human',outcome:'ok'},
+  {ts:'21 May 08:00',domain:'Procurement',fn:'Fn1: Baseline Recalibration',action:'Quarterly recalibration: tender volume baseline updated. No anomalous drift detected. RSAF maintenance contract baseline incorporated.',mode:'auto',outcome:'ok'},
+  {ts:'18 May 10:20',domain:'Cyber',fn:'Fn2: Threshold Adjustment',action:'Proposal: Cyber amber widening rejected by analyst (reason: elevated threat environment; wider threshold inappropriate during active investigation period).',mode:'human',outcome:'rejected'},
+];
+const outcomeColors={ok:'var(--success)',pending:'var(--warning)',rejected:'var(--danger)'};
+const outcomeIcons={ok:'✓ Applied','pending':'⟳ Pending','rejected':'✕ Rejected'};
+document.getElementById('audit-body').innerHTML=auditEntries.map(e=>`
+  <tr>
+    <td class="audit-ts">${e.ts}</td>
+    <td>${domains.find(d=>d.name.includes(e.domain.split(' ')[0]))?`<span style="font-size:10.5px">${domains.find(d=>d.name.includes(e.domain.split(' ')[0]))?.icon||''}</span> `:''}<span style="font-size:11.5px;color:var(--dim)">${e.domain}</span></td>
+    <td style="font-size:10.5px;color:var(--muted);white-space:nowrap">${e.fn}</td>
+    <td class="audit-action">${e.action}</td>
+    <td><span class="${e.mode==='auto'?'audit-mode-auto':'audit-mode-human'}">${e.mode==='auto'?'⟳ AUTO':'👤 H-I-L'}</span></td>
+    <td style="white-space:nowrap"><span style="color:${outcomeColors[e.outcome]};font-weight:700;font-size:11px">${outcomeIcons[e.outcome]}</span></td>
+  </tr>`).join('');
+
+// Domain architecture grid (in architecture tab)
+document.getElementById('domain-arch-grid').innerHTML=domains.map(d=>`
+  <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;border-top:2px solid ${statusColors[d.status]}">
+    <div style="font-size:16px;margin-bottom:4px">${d.icon}</div>
+    <div style="font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3">${d.name}</div>
+    <div style="font-size:10px;color:var(--muted)">${d.dims} dimensions · ${d.baseMode==='autonomous'?'Auto':'H-I-L'} baseline</div>
+    <div style="margin-top:6px;font-size:10px;color:${statusColors[d.status]};font-weight:700">${d.status}</div>
+  </div>`).join('');
+
+// Charts
+const months=['Jun 25','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr','May'];
+const grey=v=>`rgba(${v},0.15)`;
+
+new Chart(document.getElementById('baselineChart'),{
+  type:'line',
+  data:{
+    labels:months,
+    datasets:[
+      {label:'Defence Necessity',data:[97.8,97.6,97.3,97.1,96.8,96.7,96.5,96.4,96.2,96.0,95.8,95.7],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,0.05)',borderWidth:2,tension:0.4,pointRadius:2},
+      {label:'Social Cohesion',data:[89.2,89.0,88.8,88.5,88.2,88.0,87.8,87.5,87.3,87.0,86.8,86.5],borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,0.05)',borderWidth:2,tension:0.4,pointRadius:2},
+      {label:'Civilian Employability',data:[71.0,70.8,70.5,70.1,69.8,69.5,69.2,68.9,68.5,68.1,67.8,67.2],borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,0.05)',borderWidth:2,tension:0.4,pointRadius:2},
+      {label:'Family Support',data:[89.0,88.8,88.5,88.3,88.0,87.7,87.5,87.3,87.0,86.8,86.5,86.1],borderColor:'#10B981',backgroundColor:'rgba(16,185,129,0.05)',borderWidth:2,tension:0.4,pointRadius:2},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,0.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(30,45,74,0.8)'},min:60,max:100}}}
+});
+
+new Chart(document.getElementById('calActivityChart'),{
+  type:'bar',
+  data:{
+    labels:['Dec 25','Jan 26','Feb','Mar','Apr','May'],
+    datasets:[
+      {label:'Autonomous (Fn1)',data:[8,7,9,10,11,12],backgroundColor:'rgba(16,185,129,0.7)',borderRadius:3},
+      {label:'Human-approved (Fn2)',data:[2,1,3,2,4,3],backgroundColor:'rgba(245,158,11,0.7)',borderRadius:3},
+      {label:'Human-approved (Fn3)',data:[1,0,1,2,1,2],backgroundColor:'rgba(139,92,246,0.7)',borderRadius:3},
+      {label:'Rejected',data:[1,1,0,1,0,1],backgroundColor:'rgba(239,68,68,0.5)',borderRadius:3},
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{stacked:true,ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,0.8)'}},y:{stacked:true,ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,0.8)'}}}}
+});
+</script>
+</body>
+</html>
