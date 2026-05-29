@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ARIA — Narrative Intelligence</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── NI-specific styles ──────────────────────────────────────── */
+.ni-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.ni-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px 16px}
+.ni-kpi-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.ni-kpi-val{font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.ni-kpi-sub{font-size:11px;color:var(--dim)}
+.ni-kpi-val.warn{color:var(--warning)}
+.ni-kpi-val.alert{color:var(--danger)}
+.ni-kpi-val.ok{color:var(--success)}
+
+.tab-row{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab-btn{padding:8px 16px;font-size:12.5px;font-weight:600;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* R-value styles */
+.rv-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.rv-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative}
+.rv-card.danger{border-left:3px solid var(--danger)}
+.rv-card.warn{border-left:3px solid var(--warning)}
+.rv-card.ok{border-left:3px solid var(--success)}
+.rv-card.info{border-left:3px solid var(--primary)}
+.rv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.rv-name{font-size:13px;font-weight:700;color:var(--text);max-width:220px;line-height:1.3}
+.rv-value{text-align:right}
+.rv-num{font-size:28px;font-weight:800;line-height:1}
+.rv-num.danger{color:var(--danger)}
+.rv-num.warn{color:var(--warning)}
+.rv-num.ok{color:var(--success)}
+.rv-label{font-size:10px;color:var(--muted);font-weight:600}
+.rv-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.rv-pill{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--surface3);color:var(--dim);border:1px solid var(--border)}
+.rv-bar-wrap{height:6px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.rv-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.rv-insight{font-size:11px;color:var(--dim);line-height:1.5}
+.rv-io-flag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#A855F7;background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);border-radius:10px;padding:2px 8px;margin-top:6px}
+
+/* Signal stratigraphy */
+.strata-list{display:flex;flex-direction:column;gap:12px}
+.strata-row{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:grid;grid-template-columns:32px 1fr 160px 120px;gap:12px;align-items:center}
+.strata-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.strata-body{flex:1}
+.strata-layer{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.strata-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.strata-desc{font-size:11.5px;color:var(--dim);line-height:1.5}
+.strata-metric{text-align:center}
+.strata-metric-val{font-size:20px;font-weight:800;line-height:1;margin-bottom:2px}
+.strata-metric-lbl{font-size:10px;color:var(--muted)}
+.strata-status{text-align:right}
+.strata-badge{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap}
+.sb-elevated{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.sb-concern{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3)}
+.sb-watch{background:rgba(59,130,246,.15);color:var(--primary);border:1px solid rgba(59,130,246,.3)}
+.sb-normal{background:rgba(16,185,129,.15);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.convergence-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:14px 16px;margin-top:14px}
+.convergence-title{font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px}
+.convergence-body{font-size:12px;color:var(--dim);line-height:1.6}
+
+/* Policy stress-test */
+.scenario-select-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.scenario-btn{padding:8px 16px;font-size:12px;font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--dim);cursor:pointer;transition:all .15s}
+.scenario-btn.active{background:rgba(59,130,246,.12);border-color:var(--primary);color:var(--primary)}
+.stress-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stress-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stress-card-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.segment-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.segment-label{font-size:12px;color:var(--dim);width:130px;flex-shrink:0}
+.segment-bar-bg{flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.segment-bar-fill{height:100%;border-radius:4px}
+.segment-val{font-size:12px;font-weight:700;width:48px;text-align:right}
+.platform-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.platform-row:last-child{border-bottom:none}
+.platform-name{font-size:12px;color:var(--dim)}
+.platform-peak{font-size:11.5px;font-weight:700}
+.timeline-bar{display:flex;gap:3px;margin-top:12px}
+.timeline-seg{height:20px;border-radius:3px;flex:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+
+/* Authenticity fingerprint */
+.auth-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.auth-dim{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px;text-align:center}
+.auth-dim-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.auth-dial{width:64px;height:64px;margin:0 auto 8px;position:relative}
+.auth-dial svg{transform:rotate(-90deg)}
+.auth-dial-val{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;font-weight:800}
+.auth-dim-desc{font-size:10.5px;color:var(--dim);line-height:1.4}
+.auth-table{width:100%;border-collapse:collapse}
+.auth-table th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--surface3)}
+.auth-table td{font-size:11.5px;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.auth-table tr:last-child td{border-bottom:none}
+.auth-table tr:hover td{background:var(--surface3)}
+.auth-score-bar{display:flex;align-items:center;gap:6px}
+.auth-score-track{flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.auth-score-fill{height:100%;border-radius:3px}
+.flag-high{color:var(--danger);font-weight:700;font-size:10.5px}
+.flag-med{color:var(--warning);font-weight:700;font-size:10.5px}
+.flag-low{color:var(--success);font-weight:700;font-size:10.5px}
+
+/* Counter-narrative */
+.cn-intervention{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+.cn-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.cn-name{font-size:13px;font-weight:700;color:var(--text)}
+.cn-date{font-size:11px;color:var(--muted)}
+.cn-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.cn-metric{background:var(--surface3);border-radius:8px;padding:10px;text-align:center}
+.cn-metric-val{font-size:18px;font-weight:800;line-height:1;margin-bottom:3px}
+.cn-metric-lbl{font-size:10px;color:var(--muted)}
+.cn-seg-list{display:flex;flex-wrap:wrap;gap:6px}
+.cn-seg{font-size:11px;padding:3px 9px;border-radius:12px;background:var(--surface3);border:1px solid var(--border)}
+.cn-verdict{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;margin-top:8px}
+.verdict-displacement{background:rgba(16,185,129,.15);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.verdict-measuring{background:rgba(59,130,246,.15);color:var(--primary);border:1px solid rgba(59,130,246,.3)}
+.verdict-suppression{background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3)}
+
+/* Cross-national */
+.cn-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.cn-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.cn-legend-dot{width:12px;height:12px;border-radius:50%}
+.cn-compare-table{width:100%;border-collapse:collapse;margin-top:16px}
+.cn-compare-table th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface3)}
+.cn-compare-table td{font-size:12px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.cn-compare-table tr:last-child td{border-bottom:none}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <a class="sb-logo" href="index.html"><div class="sb-logo-icon">AR</div><div><div class="sb-logo-text">ARIA</div><div class="sb-logo-sub">RISK INTELLIGENCE</div></div></a>
+  <div class="sb-section">
+    <div class="sb-label">Intelligence</div>
+    <a class="nav-link" href="index.html"><span class="nav-icon">⬡</span> Command Center <span class="nav-badge nb-red">3</span></a>
+    <a class="nav-link" href="board.html"><span class="nav-icon">⊞</span> Risk Board <span class="nav-badge nb-orange">8</span></a>
+    <a class="nav-link" href="ns-sentiment.html"><span class="nav-icon">◎</span> NS Sentiment</a>
+    <a class="nav-link active" href="narrative-intelligence.html"><span class="nav-icon">◉</span> Narrative Intel <span class="nav-badge nb-red">2</span></a>
+    <a class="nav-link" href="ril.html"><span class="nav-icon">⟳</span> Risk Intel Layer <span class="nav-badge nb-orange">3</span></a>
+    <a class="nav-link" href="health.html"><span class="nav-icon">◈</span> Risk Health</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Management</div>
+    <a class="nav-link" href="registry.html"><span class="nav-icon">⊟</span> Risk Registry <span class="nav-badge nb-blue">16</span></a>
+    <a class="nav-link" href="#"><span class="nav-icon">◷</span> Action Outbox</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊕</span> Entities</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊞</span> Controls</a>
+    <a class="nav-link" href="#"><span class="nav-icon">↗</span> Reports</a>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Settings</div>
+    <a class="nav-link" href="ril.html"><span class="nav-icon">⊙</span> RIL Configuration</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊜</span> Users</a>
+    <a class="nav-link" href="#"><span class="nav-icon">⊛</span> Settings</a>
+  </div>
+  <div class="sb-bottom"><div class="sb-avatar">JJ</div><div><div class="sb-user-name">Jun Jie Tan</div><div class="sb-user-role">Senior Analyst</div></div></div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="tb-crumb"><span>🏠</span><span class="sep">/</span><span class="cur">Narrative Intelligence</span></div>
+    <div class="tb-right">
+      <span style="font-size:11px;color:var(--muted);margin-right:8px">Model trained on <strong style="color:var(--text)">3.2M posts</strong> · Last retrain: <strong style="color:var(--text)">22 May 2026</strong></span>
+      <button class="btn btn-ghost" onclick="alert('Running policy stress-test...')">⚡ Stress-Test</button>
+      <button class="btn btn-primary" onclick="alert('Generating narrative intelligence brief...')">✦ NI Brief</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header flex-between">
+      <div>
+        <div class="page-title">Narrative Intelligence</div>
+        <div class="page-sub">Predict · Attribute · Prescribe — Deep NS discourse analysis across 5 signal layers · <span id="ts"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)">⚠ 2 IO Flags</span>
+        <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;background:rgba(245,158,11,.15);color:var(--warning);border:1px solid rgba(245,158,11,.3)">↑ Convergence Alert</span>
+      </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="ni-kpi-grid">
+      <div class="ni-kpi"><div class="ni-kpi-label">Active Narrative Clusters</div><div class="ni-kpi-val">12</div><div class="ni-kpi-sub">3 growing · 6 stable · 3 fading</div></div>
+      <div class="ni-kpi"><div class="ni-kpi-label">Highest R-value</div><div class="ni-kpi-val alert">3.1</div><div class="ni-kpi-sub">"Foreign Talent vs NSF" ↑</div></div>
+      <div class="ni-kpi"><div class="ni-kpi-label">IO Authenticity Flags</div><div class="ni-kpi-val alert">3</div><div class="ni-kpi-sub">2 high-confidence · 1 medium</div></div>
+      <div class="ni-kpi"><div class="ni-kpi-label">Signal Convergence</div><div class="ni-kpi-val warn">3 / 5</div><div class="ni-kpi-sub">Layers aligned — elevated posture</div></div>
+      <div class="ni-kpi"><div class="ni-kpi-label">Interventions Tracked</div><div class="ni-kpi-val ok">7</div><div class="ni-kpi-sub">5 measured · 2 in progress</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('strata')">Signal Stratigraphy</button>
+      <button class="tab-btn" onclick="switchTab('epidemiology')">Narrative Epidemiology</button>
+      <button class="tab-btn" onclick="switchTab('stress')">Policy Stress-Test</button>
+      <button class="tab-btn" onclick="switchTab('auth')">Cultural Authenticity</button>
+      <button class="tab-btn" onclick="switchTab('counter')">Counter-Narrative</button>
+      <button class="tab-btn" onclick="switchTab('crossnational')">Cross-National</button>
+    </div>
+
+    <!-- ═══ TAB: SIGNAL STRATIGRAPHY ══════════════════════════════════ -->
+    <div class="tab-pane active" id="tab-strata">
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)">Five-Layer Signal Architecture</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">A single layer moving is noise. Three or more layers converging in the same direction is a high-confidence signal requiring escalation.</div>
+          </div>
+        </div>
+        <div class="strata-list" id="strata-list"></div>
+        <div class="convergence-box">
+          <div class="convergence-title">⚠ Convergence Alert — 3 of 5 Layers Elevated</div>
+          <div class="convergence-body">Layers 1 (Surface), 2 (Behavioural Intent), and 4 (Peripheral Communities) are simultaneously elevated. Google Trends search volumes for NS-related terms surged 32% in the past 14 days — preceding social media discourse by an estimated 2–3 weeks. Diaspora forums in Australia showing elevated negativity correlated with Thai-Cambodia conflict reporting. <strong style="color:var(--text)">Recommended: tighten NS Sentiment alert thresholds by 0.2σ pending analyst review.</strong></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Behavioural Intent — Google Trends (14 days)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Search intent precedes public discourse by 2–3 weeks. Rising "NS exemption" and "NS deferment" queries signal emerging sentiment pressure.</div>
+          <canvas id="trendsChart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Institutional Lag — Hansard NS Mentions</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Parliamentary questions on NS typically lag ground sentiment by 4–8 weeks. Current uptick in PQs is a lagging confirmation of earlier grassroots signal.</div>
+          <canvas id="hansardChart" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: NARRATIVE EPIDEMIOLOGY ══════════════════════════════ -->
+    <div class="tab-pane" id="tab-epidemiology">
+      <div style="padding:12px 16px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:var(--text)">R-value (Reproduction Rate)</strong> — how many subsequent posts one instance of a narrative generates. R &gt; 1.0 = growing. R &lt; 1.0 = fading. R &gt; 2.5 = rapid escalation requiring immediate attention.
+      </div>
+      <div class="rv-grid" id="rv-grid"></div>
+      <div class="two-col">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">R-value Trend — Top 4 Narratives (30 days)</div>
+          <canvas id="rvalueChart" height="220"></canvas>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Narrative Mutation Tracker</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">How the "Foreign Talent vs NSF" narrative has mutated as it travels across platforms — each platform variant is more emotionally charged than the original.</div>
+          <div id="mutation-tracker"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: POLICY STRESS-TEST ═══════════════════════════════════ -->
+    <div class="tab-pane" id="tab-stress">
+      <div style="padding:12px 16px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:#A855F7">Policy Stress-Test Engine</strong> — simulate predicted public sentiment response to proposed MINDEF announcements <em>before</em> they are made. Predictions are calibrated against 3–5 years of historical NS discourse. Accuracy is a measurable and improvable system metric.
+      </div>
+      <div class="scenario-select-row">
+        <button class="scenario-btn active" onclick="loadScenario(0,this)">Scenario A — NS Duration Extended (+2 months)</button>
+        <button class="scenario-btn" onclick="loadScenario(1,this)">Scenario B — NS Pay +40% with Housing Priority</button>
+        <button class="scenario-btn" onclick="loadScenario(2,this)">Scenario C — Training Incident, No Immediate Response</button>
+      </div>
+      <div id="stress-content"></div>
+    </div>
+
+    <!-- ═══ TAB: CULTURAL AUTHENTICITY ═══════════════════════════════ -->
+    <div class="tab-pane" id="tab-auth">
+      <div style="padding:12px 16px;background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:#A855F7">Cultural Authenticity Fingerprint</strong> — scores content and accounts against a multi-dimensional model of genuine organic Singaporean NS discourse, built from 3.2M posts. Gaming the fingerprint requires convincing behaviour at scale — across thousands of accounts, consistently, over time.
+      </div>
+      <div class="auth-grid">
+        <div class="auth-dim">
+          <div class="auth-dim-label">Temporal Behaviour</div>
+          <div class="auth-dial"><svg viewBox="0 0 36 36" width="64" height="64"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#1E2D4A" stroke-width="3.8"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#3B82F6" stroke-width="3.8" stroke-dasharray="72 28" stroke-linecap="round"/></svg><div class="auth-dial-val" style="color:#3B82F6">72%</div></div>
+          <div class="auth-dim-desc">Posting time vs SGT life-rhythm model · Low overnight anomaly rate</div>
+        </div>
+        <div class="auth-dim">
+          <div class="auth-dim-label">Linguistic Depth</div>
+          <div class="auth-dial"><svg viewBox="0 0 36 36" width="64" height="64"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#1E2D4A" stroke-width="3.8"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#10B981" stroke-width="3.8" stroke-dasharray="81 19" stroke-linecap="round"/></svg><div class="auth-dial-val" style="color:#10B981">81%</div></div>
+          <div class="auth-dim-desc">Singlish grammatical structure · Cultural idiom authenticity · Code-switching patterns</div>
+        </div>
+        <div class="auth-dim">
+          <div class="auth-dim-label">Network Topology</div>
+          <div class="auth-dial"><svg viewBox="0 0 36 36" width="64" height="64"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#1E2D4A" stroke-width="3.8"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#F59E0B" stroke-width="3.8" stroke-dasharray="58 42" stroke-linecap="round"/></svg><div class="auth-dial-val" style="color:#F59E0B">58%</div></div>
+          <div class="auth-dim-desc">3 tight-cluster anomalies detected · Cross-platform simultaneous activation flagged</div>
+        </div>
+        <div class="auth-dim">
+          <div class="auth-dim-label">Narrative Consistency</div>
+          <div class="auth-dial"><svg viewBox="0 0 36 36" width="64" height="64"><circle cx="18" cy="18" r="15.9" fill="none" stroke="#1E2D4A" stroke-width="3.8"/><circle cx="18" cy="18" r="15.9" fill="none" stroke="#EF4444" stroke-width="3.8" stroke-dasharray="44 56" stroke-linecap="round"/></svg><div class="auth-dial-val" style="color:#EF4444">44%</div></div>
+          <div class="auth-dim-desc">Sharp topic-activation then dormancy — characteristic coordinated account lifecycle pattern</div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Flagged Account Clusters — Authenticity Analysis</div>
+        <table class="auth-table">
+          <thead><tr>
+            <th>Account Cluster</th><th>Posts</th><th>Temporal</th><th>Linguistic</th><th>Network</th><th>Narrative</th><th>Overall Score</th><th>Flag</th>
+          </tr></thead>
+          <tbody id="auth-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: COUNTER-NARRATIVE ════════════════════════════════════ -->
+    <div class="tab-pane" id="tab-counter">
+      <div style="padding:12px 16px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:var(--success)">Counter-Narrative Effectiveness Engine</strong> — every official communication or policy intervention is treated as a measurable event in the sentiment time series. Distinguishes genuine narrative <em>displacement</em> (sentiment replaced) from <em>suppression</em> (sentiment driven underground). These look similar short-term but have very different long-term implications.
+      </div>
+      <div id="cn-list"></div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Intervention Effectiveness — Before / After Sentiment</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Sentiment displacement per intervention, by community segment. Negative = sentiment worsened post-intervention.</div>
+        <canvas id="cnChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: CROSS-NATIONAL ═══════════════════════════════════════ -->
+    <div class="tab-pane" id="tab-crossnational">
+      <div style="padding:12px 16px;background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
+        <strong style="color:var(--teal)">Cross-National Comparative Baseline</strong> — NS/conscription sentiment in Singapore is benchmarked against South Korea, Israel, and Taiwan. Anomalous Singapore patterns that mirror <em>pre-crisis</em> patterns in comparable societies carry significantly higher predictive weight.
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">12-Month Conscription Sentiment Index — SG vs Comparable Societies</div>
+        <div class="cn-legend" style="margin-bottom:4px">
+          <div class="cn-legend-item"><div class="cn-legend-dot" style="background:#3B82F6"></div>Singapore</div>
+          <div class="cn-legend-item"><div class="cn-legend-dot" style="background:#F59E0B"></div>South Korea</div>
+          <div class="cn-legend-item"><div class="cn-legend-dot" style="background:#10B981"></div>Israel</div>
+          <div class="cn-legend-item"><div class="cn-legend-dot" style="background:#EF4444"></div>Taiwan</div>
+        </div>
+        <canvas id="crossChart" height="220"></canvas>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Current Snapshot Comparison</div>
+          <table class="cn-compare-table">
+            <thead><tr><th>Country</th><th>Sentiment Score</th><th>6M Trend</th><th>Primary Pressure</th><th>IO Risk</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700">🇸🇬 Singapore</td><td style="color:var(--warning);font-weight:700">76.4%</td><td style="color:var(--danger)">↓ −2.8pp</td><td style="font-size:11px">Economic confidence, foreign talent discourse</td><td style="color:var(--danger);font-weight:700">HIGH</td></tr>
+              <tr><td style="font-weight:700">🇰🇷 South Korea</td><td style="color:var(--warning);font-weight:700">68.2%</td><td style="color:var(--dim)">→ Stable</td><td style="font-size:11px">Chaebol exemption discourse, gender equity</td><td style="color:var(--warning);font-weight:700">MEDIUM</td></tr>
+              <tr><td style="font-weight:700">🇮🇱 Israel</td><td style="color:var(--success);font-weight:700">71.5%</td><td style="color:var(--dim)">→ Stable</td><td style="font-size:11px">Ultra-Orthodox exemption remains contentious</td><td style="color:var(--warning);font-weight:700">MEDIUM</td></tr>
+              <tr><td style="font-weight:700">🇹🇼 Taiwan</td><td style="color:var(--success);font-weight:700">74.1%</td><td style="color:var(--success)">↑ +1.8pp</td><td style="font-size:11px">China tensions driving renewed NS support</td><td style="color:var(--success);font-weight:700">LOW</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">Pattern Alert — South Korea Pre-Crisis Parallel</div>
+          <div style="padding:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:12px">
+            <strong style="color:var(--warning)">Analyst note:</strong> Singapore's current narrative pattern — economic stress → foreign talent discourse → NS fairness framing — mirrors South Korea's trajectory in Q3 2021, approximately <strong style="color:var(--text)">6 months before</strong> South Korea's NS sentiment dropped to a 10-year low. South Korea's trigger was a high-profile celebrity exemption case that went viral. Singapore's equivalent vulnerability: any high-profile NS inequality incident in the current economic climate carries amplified risk.
+          </div>
+          <div style="font-size:11.5px;color:var(--dim)">
+            <strong style="color:var(--text)">Recommended action:</strong> Pre-position comms response playbook for NS inequality escalation scenario. See Policy Stress-Test tab for Scenario A simulation.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+document.getElementById('ts').textContent = new Date().toLocaleString('en-SG',{timeZone:'Asia/Singapore',hour12:false});
+
+function switchTab(name){
+  const tabs=['strata','epidemiology','stress','auth','counter','crossnational'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tabs[i]===name));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── STRATIGRAPHY ─────────────────────────────────────────────────────────
+const layers = [
+  {n:1,color:'#EF4444',layer:'Layer 1 — Surface',title:'Public Social Media Discourse',desc:'Reddit r/NationalServiceSG, HardwareZone EDMW, TikTok, YouTube, CNA, Straits Times — NS sentiment polarity, volume, narrative frame prevalence',metric:'76.4',mlbl:'Sentiment Score',badge:'CONCERN',bc:'sb-concern'},
+  {n:2,color:'#F59E0B',layer:'Layer 2 — Behavioural Intent',title:'Search Intent (Google Trends)',desc:'"NS exemption" +32% · "NS deferment" +18% · "NS medical excuse" +41% past 14 days. Search intent precedes public social expression by 2–3 weeks — this layer is currently the strongest forward signal.',metric:'+32%',mlbl:'Search Surge',badge:'ELEVATED',bc:'sb-elevated'},
+  {n:3,color:'#3B82F6',layer:'Layer 3 — Institutional',title:'Hansard & Official Communications',desc:'3 NS-related Parliamentary Questions tabled this month vs rolling average of 1.2 — institutional acknowledgement of ground sentiment is accelerating. Official MINDEF messaging tracking shows no divergence.',metric:'3 PQs',mlbl:'This Month',badge:'WATCH',bc:'sb-watch'},
+  {n:4,color:'#8B5CF6',layer:'Layer 4 — Peripheral Communities',title:'Diaspora, Parents, Employers',desc:'Australian-Singaporean diaspora forums showing elevated NS negativity (+22% week-on-week). Parent forums: Family Support narrative trending down 4.1pp over 12 days. LinkedIn employer discourse: stable.',metric:'+22%',mlbl:'Diaspora Surge',badge:'CONCERN',bc:'sb-concern'},
+  {n:5,color:'#10B981',layer:'Layer 5 — Longitudinal',title:'Post-ORD Cohort Sentiment',desc:'5-year post-ORD retrospective sentiment stable at 67.3% "worthwhile" — within normal range. 10-year cohort shows slight positive drift (+1.2pp) suggesting long-term NS value perception remains intact.',metric:'67.3%',mlbl:'5yr Post-ORD',badge:'NORMAL',bc:'sb-normal'},
+];
+document.getElementById('strata-list').innerHTML = layers.map(l=>`
+  <div class="strata-row">
+    <div class="strata-num" style="background:${l.color}">${l.n}</div>
+    <div class="strata-body">
+      <div class="strata-layer">${l.layer}</div>
+      <div class="strata-title">${l.title}</div>
+      <div class="strata-desc">${l.desc}</div>
+    </div>
+    <div class="strata-metric">
+      <div class="strata-metric-val" style="color:${l.color}">${l.metric}</div>
+      <div class="strata-metric-lbl">${l.mlbl}</div>
+    </div>
+    <div class="strata-status"><span class="strata-badge ${l.bc}">${l.badge}</span></div>
+  </div>`).join('');
+
+// Google Trends chart
+const days14 = Array.from({length:14},(_,i)=>{const d=new Date('2026-05-15');d.setDate(d.getDate()+i);return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});});
+new Chart(document.getElementById('trendsChart'),{type:'line',data:{labels:days14,datasets:[
+  {label:'NS exemption',data:[42,44,45,48,52,55,59,63,68,72,74,76,79,82],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.05)',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'NS deferment',data:[30,31,32,33,35,36,38,40,42,44,45,46,47,48],borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,.05)',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'NS medical',data:[20,21,23,25,28,30,34,38,42,46,49,52,55,58],borderColor:'#8B5CF6',backgroundColor:'rgba(139,92,246,.05)',borderWidth:2,tension:.4,pointRadius:2},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'},title:{display:true,text:'Relative Search Volume',color:'#4A5C8A',font:{size:10}}}}}});
+
+// Hansard chart
+const months8=['Oct 25','Nov','Dec','Jan 26','Feb','Mar','Apr','May'];
+new Chart(document.getElementById('hansardChart'),{type:'bar',data:{labels:months8,datasets:[
+  {label:'NS Parliamentary Questions',data:[1,0,2,1,1,2,2,3],backgroundColor:'rgba(59,130,246,.6)',borderRadius:4},
+  {label:'Rolling Avg (1.2)',data:[1.2,1.2,1.2,1.2,1.2,1.2,1.2,1.2],type:'line',borderColor:'#F59E0B',borderWidth:2,borderDash:[4,4],pointRadius:0},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10},stepSize:1},grid:{color:'rgba(30,45,74,.8)'}}}}});
+
+// ── EPIDEMIOLOGY ──────────────────────────────────────────────────────────
+const narratives=[
+  {name:'"Foreign Talent vs NSF" fairness frame',rv:3.1,trend:'↑ Surging',origin:'HardwareZone EDMW',spread:['HWZ','Reddit','TikTok','Telegram'],ss:4,bar:100,col:'#EF4444',io:true,insight:'Simultaneous 5-platform seeding detected 26 May. 4 super-spreader accounts identified with low authenticity scores. R-value has doubled in 8 days.'},
+  {name:'"NS Inequality" — sacrifice vs reward gap',rv:2.8,trend:'↑ Growing',origin:'Reddit',spread:['Reddit','TikTok','Instagram'],ss:2,bar:90,col:'#EF4444',io:false,insight:'Frame prevalence: 1.8% → 14.2% over 30 days. Organic amplification detected — primarily pre-enlistee and active NSF cohort. No IO indicators.'},
+  {name:'"NS Digital Skills Gap" — relevance to modern warfare',rv:1.7,trend:'↑ Growing',origin:'LinkedIn',spread:['LinkedIn','Reddit'],ss:1,bar:55,col:'#F59E0B',io:false,insight:'Constructive framing — calls for NS modernisation. Spreading primarily among professionals and employers. Low threat, high policy relevance.'},
+  {name:'"MINDEF Safety Standards" — training welfare',rv:1.4,trend:'→ Stable',origin:'Reddit',spread:['Reddit','HWZ'],ss:1,bar:45,col:'#F59E0B',io:false,insight:'Elevated following Kranji heat injury cluster (ARIA-HS-003). Stable but tracking — any further incidents would likely spike R-value above 2.0.'},
+  {name:'"NS Career Disruption" — employability concern',rv:0.9,trend:'↓ Fading',origin:'HWZ',spread:['HWZ','Reddit'],ss:0,bar:29,col:'#10B981',io:false,insight:'Declining since NS Recognition Scheme announcement (15 Apr). Employer discourse stable. Counter-narrative effectiveness confirmed.'},
+  {name:'"NS Pride / Singapore Identity" — positive frame',rv:0.6,trend:'↓ Fading',origin:'Official comms',spread:['Instagram','YouTube'],ss:0,bar:19,col:'#3B82F6',io:false,insight:'NS50 campaign content. Organic propagation moderate (35%). Displacement confirmed for Career Disruption narrative in target demographic.'},
+];
+document.getElementById('rv-grid').innerHTML=narratives.map(n=>{
+  const cls=n.rv>=2.5?'danger':n.rv>=1.5?'warn':n.rv>=1?'info':'ok';
+  return `<div class="rv-card ${cls}">
+    <div class="rv-header">
+      <div class="rv-name">${n.name}</div>
+      <div class="rv-value"><div class="rv-num ${cls}">${n.rv}</div><div class="rv-label">R-VALUE</div></div>
+    </div>
+    <div class="rv-meta">
+      <span class="rv-pill">${n.trend}</span>
+      <span class="rv-pill">Origin: ${n.origin}</span>
+      <span class="rv-pill">Super-spreaders: ${n.ss}</span>
+      ${n.spread.map(p=>`<span class="rv-pill">${p}</span>`).join('')}
+    </div>
+    <div class="rv-bar-wrap"><div class="rv-bar-fill" style="width:${n.bar}%;background:${n.col}"></div></div>
+    <div class="rv-insight">${n.insight}</div>
+    ${n.io?'<div class="rv-io-flag">⚠ IO Fingerprint Detected</div>':''}
+  </div>`;}).join('');
+
+// R-value trend chart
+const days30=Array.from({length:10},(_,i)=>{const d=new Date('2026-04-28');d.setDate(d.getDate()+i*3);return d.toLocaleDateString('en-SG',{day:'numeric',month:'short'});});
+new Chart(document.getElementById('rvalueChart'),{type:'line',data:{labels:days30,datasets:[
+  {label:'Foreign Talent vs NSF',data:[1.2,1.4,1.6,1.8,2.1,2.4,2.6,2.8,3.0,3.1],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.08)',borderWidth:2.5,tension:.4,pointRadius:3,fill:true},
+  {label:'NS Inequality',data:[1.0,1.2,1.4,1.7,1.9,2.1,2.3,2.5,2.7,2.8],borderColor:'#F59E0B',backgroundColor:'rgba(245,158,11,.05)',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'NS Digital Skills Gap',data:[0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7],borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.05)',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'NS Pride (positive)',data:[0.9,0.8,0.8,0.7,0.7,0.7,0.6,0.6,0.6,0.6],borderColor:'#10B981',borderWidth:2,tension:.4,pointRadius:2},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}},annotation:{annotations:{line1:{type:'line',yMin:1,yMax:1,borderColor:'rgba(255,255,255,.3)',borderWidth:1,borderDash:[4,4],label:{content:'R=1.0',enabled:true,color:'#8B9DC3',font:{size:9}}}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'},min:0.4,title:{display:true,text:'R-value',color:'#4A5C8A',font:{size:10}}}}}});
+
+// Mutation tracker
+document.getElementById('mutation-tracker').innerHTML=`
+  <div style="display:flex;flex-direction:column;gap:8px">
+    ${[
+      {platform:'HardwareZone (Origin)',content:'"Why are NS boys expected to sacrifice 2 years when foreign PRs who never served get the same job opportunities?" — measured, policy-focused grievance',rval:'1.2',col:'#10B981'},
+      {platform:'Reddit r/NationalServiceSG',content:'"The system is fundamentally unfair. We give 2 years. FTs give nothing. Then compete for the same jobs. Something needs to change." — amplified, emotional',rval:'2.1',col:'#F59E0B'},
+      {platform:'TikTok (video comments)',content:'"NS boys are literally subsidising foreign talent careers with 2 years of their life 🤡" — stripped to outrage, emoji-driven, shareable format',rval:'3.1',col:'#EF4444'},
+      {platform:'Telegram channels (IO-flagged)',content:'"Singapore treats its own sons like second-class citizens. Sign NS, miss career opportunities, then compete with people who never sacrificed anything." — maximally polarising, IO fingerprint detected',rval:'3.1',col:'#8B5CF6'},
+    ].map(m=>`<div style="background:var(--surface3);border:1px solid var(--border);border-radius:7px;padding:10px 12px;border-left:3px solid ${m.col}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted)">${m.platform}</div>
+        <div style="font-size:11px;font-weight:700;color:${m.col}">R=${m.rval}</div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);line-height:1.5;font-style:italic">${m.content}</div>
+    </div>`).join('')}
+  </div>`;
+
+// ── POLICY STRESS-TEST ────────────────────────────────────────────────────
+const scenarios=[
+  {
+    title:'Scenario A — NS Duration Extended from 22 to 24 Months',
+    summary:'Predicted response: immediate sharp spike in "fairness" and "career disruption" discourse among pre-enlistees and parents. HardwareZone and Reddit as primary amplification platforms. Peak sentiment depression at Day 3–5. Partial recovery by Week 3 if economic compensation is announced simultaneously.',
+    peakDrop:'-11.2pp',peakDay:'Day 4',recoveryTime:'8–10 weeks',riskLevel:'HIGH',riskColor:'#EF4444',
+    segments:[
+      {label:'Pre-enlistees',delta:-18.4,col:'#EF4444'},
+      {label:'Active NSFs',delta:-12.1,col:'#EF4444'},
+      {label:'Parents',delta:-14.7,col:'#F59E0B'},
+      {label:'Post-ORD (ORD < 2yr)',delta:-9.2,col:'#F59E0B'},
+      {label:'Employers',delta:-3.1,col:'#3B82F6'},
+      {label:'Diaspora (abroad)',delta:-16.8,col:'#EF4444'},
+    ],
+    platforms:[
+      {name:'HardwareZone EDMW',peak:'Very High',col:'#EF4444'},
+      {name:'Reddit r/NS',peak:'High',col:'#EF4444'},
+      {name:'TikTok',peak:'High (viral risk)',col:'#EF4444'},
+      {name:'LinkedIn',peak:'Medium',col:'#F59E0B'},
+      {name:'Parliament',peak:'Medium (PQs expected w/+3)',col:'#F59E0B'},
+    ],
+    mitigation:'If announced with simultaneous pay increase of ≥40% and enhanced employer recognition scheme, predicted peak drop reduces to −6.1pp with recovery time of 4–5 weeks.',
+    timeline:['Spike','Peak','First recovery','Policy clarification','Stabilisation','Baseline return'],
+    tcolors:['#EF4444','#EF4444','#F59E0B','#F59E0B','#3B82F6','#10B981'],
+  },
+  {
+    title:'Scenario B — NS Pay +40% with New Housing Priority Scheme',
+    summary:'Predicted response: positive sentiment movement strongest among parents and employers. Muted response among active NSFs who prioritise duration over compensation. Diaspora community most positively responsive. Overall net positive — but risk of "too little too late" counter-narrative from vocal minority.',
+    peakDrop:'+6.8pp',peakDay:'Day 7',recoveryTime:'N/A (positive)',riskLevel:'LOW',riskColor:'#10B981',
+    segments:[
+      {label:'Parents',delta:+9.4,col:'#10B981'},
+      {label:'Employers',delta:+8.1,col:'#10B981'},
+      {label:'Diaspora (abroad)',delta:+7.3,col:'#10B981'},
+      {label:'Post-ORD (ORD < 2yr)',delta:+5.2,col:'#10B981'},
+      {label:'Active NSFs',delta:+2.8,col:'#3B82F6'},
+      {label:'Pre-enlistees',delta:+4.1,col:'#3B82F6'},
+    ],
+    platforms:[
+      {name:'LinkedIn',peak:'High (employers/parents)',col:'#10B981'},
+      {name:'Instagram',peak:'Medium-high',col:'#10B981'},
+      {name:'HardwareZone EDMW',peak:'Mixed — "not enough" counter-narrative',col:'#F59E0B'},
+      {name:'Reddit r/NS',peak:'Medium (duration remains grievance)',col:'#F59E0B'},
+      {name:'TikTok',peak:'Medium (positive content amplifiable)',col:'#10B981'},
+    ],
+    mitigation:'Proactively seed employer recognition angle on LinkedIn 48h before announcement. Pre-brief parents via official MINDEF channels. Prepare for HWZ "duration > pay" counter-narrative with factual response package.',
+    timeline:['Announcement','Organic spread','Parent/employer response','Peak positive','NS duration counter-narrative','Stabilisation'],
+    tcolors:['#10B981','#10B981','#10B981','#10B981','#F59E0B','#10B981'],
+  },
+  {
+    title:'Scenario C — High-Profile Training Incident, No Immediate Official Response',
+    summary:'Predicted response: rapid cross-platform amplification with R-value exceeding 3.0 within 6 hours. Diaspora community becomes primary amplification vector. Institutional credibility damage persisting 4–6 weeks. Every hour of non-response increases peak sentiment drop by est. 0.8pp.',
+    peakDrop:'-17.4pp',peakDay:'Day 2–3',recoveryTime:'6–10 weeks',riskLevel:'CRITICAL',riskColor:'#EF4444',
+    segments:[
+      {label:'Parents',delta:-22.1,col:'#EF4444'},
+      {label:'Diaspora (abroad)',delta:-24.3,col:'#EF4444'},
+      {label:'Pre-enlistees',delta:-19.8,col:'#EF4444'},
+      {label:'Active NSFs',delta:-14.2,col:'#EF4444'},
+      {label:'Post-ORD',delta:-11.7,col:'#F59E0B'},
+      {label:'Employers',delta:-6.4,col:'#F59E0B'},
+    ],
+    platforms:[
+      {name:'TikTok',peak:'CRITICAL — fastest amplification',col:'#EF4444'},
+      {name:'Telegram',peak:'CRITICAL — IO seeding likely',col:'#EF4444'},
+      {name:'HardwareZone EDMW',peak:'Very High',col:'#EF4444'},
+      {name:'Reddit r/NS',peak:'Very High',col:'#EF4444'},
+      {name:'Parliament',peak:'High — PQs within 72h',col:'#EF4444'},
+    ],
+    mitigation:'Response within 2 hours reduces peak drop to −9.8pp and recovery time to 3–4 weeks. Recommended: 2-hour acknowledgement statement + 48-hour full factual response + parent briefing package. Do not wait for full investigation before first acknowledgement.',
+    timeline:['Incident','6h mark','24h mark','Peak','Official response','Slow recovery','Stabilisation'],
+    tcolors:['#EF4444','#EF4444','#EF4444','#EF4444','#F59E0B','#F59E0B','#10B981'],
+  },
+];
+
+let activeScenario=0;
+function loadScenario(idx,btn){
+  activeScenario=idx;
+  document.querySelectorAll('.scenario-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s=scenarios[idx];
+  const posNeg=delta=>delta>=0?`+${delta.toFixed(1)}pp`:`${delta.toFixed(1)}pp`;
+  const segColor=delta=>delta>=0?'#10B981':delta>-10?'#F59E0B':'#EF4444';
+  document.getElementById('stress-content').innerHTML=`
+    <div style="padding:14px 16px;background:${s.riskColor}22;border:1px solid ${s.riskColor}44;border-radius:10px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:${s.riskColor};margin-bottom:6px">${s.title}</div>
+      <div style="font-size:12px;color:var(--dim);line-height:1.7">${s.summary}</div>
+    </div>
+    <div class="stress-grid">
+      <div class="stress-card">
+        <div class="stress-card-title">Predicted Sentiment Δ by Community Segment</div>
+        ${s.segments.map(seg=>`<div class="segment-row">
+          <div class="segment-label">${seg.label}</div>
+          <div class="segment-bar-bg"><div class="segment-bar-fill" style="width:${Math.min(Math.abs(seg.delta)*3.5,100)}%;background:${segColor(seg.delta)}"></div></div>
+          <div class="segment-val" style="color:${segColor(seg.delta)}">${posNeg(seg.delta)}</div>
+        </div>`).join('')}
+      </div>
+      <div class="stress-card">
+        <div class="stress-card-title">Platform Response Prediction</div>
+        ${s.platforms.map(p=>`<div class="platform-row">
+          <div class="platform-name">${p.name}</div>
+          <div class="platform-peak" style="color:${p.col}">${p.peak}</div>
+        </div>`).join('')}
+        <div style="margin-top:12px;padding:10px;background:var(--surface3);border-radius:7px;font-size:11px;color:var(--dim);line-height:1.5">
+          <strong style="color:var(--text)">Peak drop:</strong> ${s.peakDrop} at ${s.peakDay}&nbsp;&nbsp;
+          <strong style="color:var(--text)">Recovery:</strong> ${s.recoveryTime}
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px">Predicted Timeline</div>
+      <div style="display:flex;gap:3px;margin-bottom:12px">
+        ${s.tcolors.map((c,i)=>`<div style="flex:1;height:24px;border-radius:4px;background:${c}22;border:1px solid ${c}44;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:${c}">${s.timeline[i]}</div>`).join('')}
+      </div>
+      <div style="padding:12px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:8px;font-size:12px;color:var(--dim);line-height:1.6">
+        <strong style="color:var(--success)">Mitigation:</strong> ${s.mitigation}
+      </div>
+    </div>`;
+}
+loadScenario(0,document.querySelector('.scenario-btn'));
+
+// ── AUTHENTICITY ──────────────────────────────────────────────────────────
+const authClusters=[
+  {cluster:'Cluster A — "Operation Fairness"',posts:847,temporal:22,linguistic:31,network:18,narrative:15,overall:22,flag:'HIGH'},
+  {cluster:'Cluster B — "NS Burden" amplifiers',posts:412,temporal:48,linguistic:55,network:34,narrative:28,overall:40,flag:'HIGH'},
+  {cluster:'Cluster C — Diaspora echo accounts',posts:223,temporal:61,linguistic:72,network:45,narrative:52,overall:56,flag:'MEDIUM'},
+  {cluster:'Organic — r/NationalServiceSG regulars',posts:4821,temporal:88,linguistic:91,network:84,narrative:87,overall:87,flag:'LOW'},
+  {cluster:'Organic — HWZ veterans',posts:3102,temporal:85,linguistic:93,network:89,narrative:82,overall:87,flag:'LOW'},
+];
+const flagColor={HIGH:'var(--danger)',MEDIUM:'var(--warning)',LOW:'var(--success)'};
+document.getElementById('auth-tbody').innerHTML=authClusters.map(a=>`<tr>
+  <td style="font-size:12px;font-weight:600">${a.cluster}</td>
+  <td style="color:var(--muted)">${a.posts.toLocaleString()}</td>
+  ${['temporal','linguistic','network','narrative'].map(k=>`<td>
+    <div class="auth-score-bar">
+      <div class="auth-score-track"><div class="auth-score-fill" style="width:${a[k]}%;background:${a[k]<40?'var(--danger)':a[k]<65?'var(--warning)':'var(--success)'}"></div></div>
+      <span style="font-size:11px;color:var(--dim);width:28px;text-align:right">${a[k]}%</span>
+    </div>
+  </td>`).join('')}
+  <td style="font-weight:800;font-size:13px;color:${a.overall<40?'var(--danger)':a.overall<65?'var(--warning)':'var(--success)'}">${a.overall}%</td>
+  <td><span class="flag-${a.flag.toLowerCase()}">${a.flag}</span></td>
+</tr>`).join('');
+
+// ── COUNTER-NARRATIVE ─────────────────────────────────────────────────────
+const interventions=[
+  {name:'NS Recognition Scheme Announcement',date:'15 Apr 2026',displacement:'+4.2pp',target:'Overall sentiment',organic:'62%',verdict:'displacement',verdictLabel:'Displacement Confirmed',metrics:[{v:'+4.2pp',l:'Overall lift'},{v:'+7.1pp',l:'Parents'},{v:'+8.1pp',l:'Employers'},{v:'+1.8pp',l:'Active NSFs'}],segs:['Parents ✓✓','Employers ✓✓','Post-ORD ✓','Active NSFs ~ (muted)','Pre-enlistees ~ (neutral)']},
+  {name:'NS50 Pride Video Campaign',date:'1 May 2026',displacement:'+2.8pp',target:'"NS Identity" dimension',organic:'71%',verdict:'displacement',verdictLabel:'Displacement Confirmed',metrics:[{v:'+2.8pp',l:'Identity lift'},{v:'71%',l:'Organic share'},{v:'+4.1pp',l:'Post-ORD'},{v:'No effect',l:'Pre-enlistees'}],segs:['Post-ORD ✓✓','Parents ✓','Older cohorts ✓','Pre-enlistees — (no effect)','Active NSFs — (indifferent)']},
+  {name:'NS Pay Review Statement',date:'20 May 2026',displacement:'Measuring…',target:'NS Economic Impact dimension',organic:'Measuring…',verdict:'measuring',verdictLabel:'Measuring (8 days in)',metrics:[{v:'+1.4pp',l:'8-day lift'},{v:'44%',l:'Organic share'},{v:'Pending',l:'Segment analysis'},{v:'12 days',l:'Est. to peak'}],segs:['Insufficient data — monitoring for 21-day window']},
+];
+document.getElementById('cn-list').innerHTML=interventions.map(i=>`
+  <div class="cn-intervention">
+    <div class="cn-header">
+      <div><div class="cn-name">${i.name}</div><div class="cn-date">${i.date} · Target: ${i.target} · Organic propagation: ${i.organic}</div></div>
+    </div>
+    <div class="cn-metrics">${i.metrics.map(m=>`<div class="cn-metric"><div class="cn-metric-val" style="color:${m.v.startsWith('+')?'var(--success)':m.v==='Measuring…'||m.v==='Pending'?'var(--muted)':'var(--text)'}">${m.v}</div><div class="cn-metric-lbl">${m.l}</div></div>`).join('')}</div>
+    <div class="cn-seg-list">${i.segs.map(s=>`<span class="cn-seg">${s}</span>`).join('')}</div>
+    <div><span class="cn-verdict verdict-${i.verdict}">${i.verdict==='displacement'?'✓':i.verdict==='measuring'?'⟳':'⚠'} ${i.verdictLabel}</span></div>
+  </div>`).join('');
+
+new Chart(document.getElementById('cnChart'),{type:'bar',data:{
+  labels:['Parents','Employers','Post-ORD','Active NSFs','Pre-enlistees','Diaspora'],
+  datasets:[
+    {label:'NS Recognition Scheme (15 Apr)',data:[7.1,8.1,4.8,1.8,2.2,5.3],backgroundColor:'rgba(59,130,246,.7)',borderRadius:4},
+    {label:'NS50 Campaign (1 May)',data:[3.2,1.8,4.1,0.9,0.2,2.1],backgroundColor:'rgba(16,185,129,.7)',borderRadius:4},
+    {label:'NS Pay Review (20 May, partial)',data:[2.8,3.1,1.9,1.4,1.8,2.4],backgroundColor:'rgba(245,158,11,.5)',borderRadius:4},
+  ]
+},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10},callback:v=>'+'+v+'pp'},grid:{color:'rgba(30,45,74,.8)'},title:{display:true,text:'Sentiment Displacement (pp)',color:'#4A5C8A',font:{size:10}}}}}});
+
+// ── CROSS-NATIONAL ────────────────────────────────────────────────────────
+const months12=['Jun 25','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar','Apr','May'];
+new Chart(document.getElementById('crossChart'),{type:'line',data:{labels:months12,datasets:[
+  {label:'Singapore',data:[79.2,78.8,78.4,78.1,77.8,77.5,77.3,77.1,76.8,76.6,76.5,76.4],borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.08)',borderWidth:2.5,tension:.4,pointRadius:3,fill:true},
+  {label:'South Korea',data:[69.1,68.8,68.6,68.5,68.4,68.3,68.2,68.2,68.2,68.3,68.2,68.2],borderColor:'#F59E0B',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'Israel',data:[72.1,71.9,71.7,71.5,71.4,71.3,71.4,71.5,71.4,71.5,71.5,71.5],borderColor:'#10B981',borderWidth:2,tension:.4,pointRadius:2},
+  {label:'Taiwan',data:[72.8,73.0,73.1,73.3,73.5,73.4,73.6,73.8,73.9,74.0,74.1,74.1],borderColor:'#EF4444',borderWidth:2,tension:.4,pointRadius:2},
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8B9DC3',font:{size:10}}}},scales:{x:{ticks:{color:'#4A5C8A',font:{size:10}},grid:{color:'rgba(30,45,74,.8)'}},y:{ticks:{color:'#4A5C8A',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(30,45,74,.8)'},min:60,max:85}}}});
+</script>
+</body>
+</html>
