@@ -220,8 +220,8 @@
       </div>
       <div class="two-col">
         <div class="card">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Behavioural Intent — Google Trends (14 days)</div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Search intent precedes public discourse by 2–3 weeks. Rising "NS exemption" and "NS deferment" queries signal emerging sentiment pressure.</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Google Trends — Directional State (14-day window)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Treated as directional classifier only — absolute index values are not comparable across terms. Signals classified as trend states (RISING / STABLE / DECLINING / SPIKE) after 7-day threshold. Negative cluster (exemption, deferment, medical excuse) in RISING state 11 consecutive days.</div>
           <canvas id="trendsChart" height="180"></canvas>
         </div>
         <div class="card">
@@ -235,12 +235,12 @@
     <!-- ═══ TAB: NARRATIVE EPIDEMIOLOGY ══════════════════════════════ -->
     <div class="tab-pane" id="tab-epidemiology">
       <div style="padding:12px 16px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:8px;margin-bottom:16px;font-size:12.5px;color:var(--dim)">
-        <strong style="color:var(--text)">R-value (Reproduction Rate)</strong> — how many subsequent posts one instance of a narrative generates. R &gt; 1.0 = growing. R &lt; 1.0 = fading. R &gt; 2.5 = rapid escalation requiring immediate attention.
+        <strong style="color:var(--text)">Narrative Velocity Indicator</strong> — computed using 48-hour rolling time-window generations of <em>unique new authors</em> per window (not total posts, to prevent re-engagement inflation). R &gt; 1.0 = accelerating. R &lt; 1.0 = decelerating. Used for <strong style="color:var(--text)">analyst prioritisation</strong> — which narratives need attention now — not as a point forecast. Narrative clusters defined by documented cosine-similarity thresholds, validated against Phase 1 annotation study. Model retrospectively validated against historical NS events before operational deployment.
       </div>
       <div class="rv-grid" id="rv-grid"></div>
       <div class="two-col">
         <div class="card">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">R-value Trend — Top 4 Narratives (30 days)</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Narrative Velocity — Top 4 Clusters (30 days, 48-hr unique-author windows)</div>
           <canvas id="rvalueChart" height="220"></canvas>
         </div>
         <div class="card">
@@ -371,7 +371,7 @@ function switchTab(name){
 // ── STRATIGRAPHY ─────────────────────────────────────────────────────────
 const layers = [
   {n:1,color:'#EF4444',layer:'Layer 1 — Surface',title:'Public Social Media Discourse',desc:'Reddit r/NationalServiceSG, HardwareZone EDMW, TikTok, YouTube, CNA, Straits Times — NS sentiment polarity, volume, narrative frame prevalence',metric:'76.4',mlbl:'Sentiment Score',badge:'CONCERN',bc:'sb-concern'},
-  {n:2,color:'#F59E0B',layer:'Layer 2 — Behavioural Intent',title:'Search Intent (Google Trends)',desc:'"NS exemption" +32% · "NS deferment" +18% · "NS medical excuse" +41% past 14 days. Search intent precedes public social expression by 2–3 weeks — this layer is currently the strongest forward signal.',metric:'+32%',mlbl:'Search Surge',badge:'ELEVATED',bc:'sb-elevated'},
+  {n:2,color:'#F59E0B',layer:'Layer 2 — Behavioural Intent (Directional Signal)',title:'Google Trends — NS Search Term Cluster States',desc:'Directional classifier, not quantitative: negative NS term cluster (exemption, deferment, medical excuse) in sustained RISING state for 11 consecutive days · positive term cluster (NS pride, NS benefits) STABLE. 7-day minimum threshold applied to filter single-week noise on low-volume terms. Relative shift between negative vs positive cluster is the signal — absolute index values not compared across terms.',metric:'↑ RISING',mlbl:'Neg. Cluster (11d)',badge:'ELEVATED',bc:'sb-elevated'},
   {n:3,color:'#3B82F6',layer:'Layer 3 — Institutional',title:'Hansard & Official Communications',desc:'3 NS-related Parliamentary Questions tabled this month vs rolling average of 1.2 — institutional acknowledgement of ground sentiment is accelerating. Official MINDEF messaging tracking shows no divergence.',metric:'3 PQs',mlbl:'This Month',badge:'WATCH',bc:'sb-watch'},
   {n:4,color:'#8B5CF6',layer:'Layer 4 — Peripheral Communities',title:'Diaspora, Parents, Employers',desc:'Australian-Singaporean diaspora forums showing elevated NS negativity (+22% week-on-week). Parent forums: Family Support narrative trending down 4.1pp over 12 days. LinkedIn employer discourse: stable.',metric:'+22%',mlbl:'Diaspora Surge',badge:'CONCERN',bc:'sb-concern'},
   {n:5,color:'#10B981',layer:'Layer 5 — Longitudinal',title:'Post-ORD Cohort Sentiment',desc:'5-year post-ORD retrospective sentiment stable at 67.3% "worthwhile" — within normal range. 10-year cohort shows slight positive drift (+1.2pp) suggesting long-term NS value perception remains intact.',metric:'67.3%',mlbl:'5yr Post-ORD',badge:'NORMAL',bc:'sb-normal'},
@@ -408,12 +408,12 @@ new Chart(document.getElementById('hansardChart'),{type:'bar',data:{labels:month
 
 // ── EPIDEMIOLOGY ──────────────────────────────────────────────────────────
 const narratives=[
-  {name:'"Foreign Talent vs NSF" fairness frame',rv:3.1,trend:'↑ Surging',origin:'HardwareZone EDMW',spread:['HWZ','Reddit','TikTok','Telegram'],ss:4,bar:100,col:'#EF4444',io:true,insight:'Simultaneous 5-platform seeding detected 26 May. 4 super-spreader accounts identified with low authenticity scores. R-value has doubled in 8 days.'},
-  {name:'"NS Inequality" — sacrifice vs reward gap',rv:2.8,trend:'↑ Growing',origin:'Reddit',spread:['Reddit','TikTok','Instagram'],ss:2,bar:90,col:'#EF4444',io:false,insight:'Frame prevalence: 1.8% → 14.2% over 30 days. Organic amplification detected — primarily pre-enlistee and active NSF cohort. No IO indicators.'},
-  {name:'"NS Digital Skills Gap" — relevance to modern warfare',rv:1.7,trend:'↑ Growing',origin:'LinkedIn',spread:['LinkedIn','Reddit'],ss:1,bar:55,col:'#F59E0B',io:false,insight:'Constructive framing — calls for NS modernisation. Spreading primarily among professionals and employers. Low threat, high policy relevance.'},
-  {name:'"MINDEF Safety Standards" — training welfare',rv:1.4,trend:'→ Stable',origin:'Reddit',spread:['Reddit','HWZ'],ss:1,bar:45,col:'#F59E0B',io:false,insight:'Elevated following Kranji heat injury cluster (ARIA-HS-003). Stable but tracking — any further incidents would likely spike R-value above 2.0.'},
-  {name:'"NS Career Disruption" — employability concern',rv:0.9,trend:'↓ Fading',origin:'HWZ',spread:['HWZ','Reddit'],ss:0,bar:29,col:'#10B981',io:false,insight:'Declining since NS Recognition Scheme announcement (15 Apr). Employer discourse stable. Counter-narrative effectiveness confirmed.'},
-  {name:'"NS Pride / Singapore Identity" — positive frame',rv:0.6,trend:'↓ Fading',origin:'Official comms',spread:['Instagram','YouTube'],ss:0,bar:19,col:'#3B82F6',io:false,insight:'NS50 campaign content. Organic propagation moderate (35%). Displacement confirmed for Career Disruption narrative in target demographic.'},
+  {name:'"Foreign Talent vs NSF" fairness frame',rv:3.1,trend:'↑ Surging',origin:'HardwareZone EDMW',spread:['HWZ','Reddit','TikTok','Telegram'],ss:4,bar:100,col:'#EF4444',io:true,insight:'Simultaneous 5-platform seeding detected 26 May. 4 super-spreader accounts flagged (low authenticity scores). 48-hr unique-author count: 847 new authors in latest window vs 312 prior. Accelerating — analyst escalation priority: HIGH.'},
+  {name:'"NS Inequality" — sacrifice vs reward gap',rv:2.8,trend:'↑ Growing',origin:'Reddit',spread:['Reddit','TikTok','Instagram'],ss:2,bar:90,col:'#EF4444',io:false,insight:'48-hr unique-author count: 612 new authors in latest window vs 287 prior. Organic amplification — primarily pre-enlistees and active NSF cohort. No IO indicators. Cosine cluster similarity ≥0.82 (confirmed same narrative). Analyst priority: HIGH.'},
+  {name:'"NS Digital Skills Gap" — relevance to modern warfare',rv:1.7,trend:'↑ Growing',origin:'LinkedIn',spread:['LinkedIn','Reddit'],ss:1,bar:55,col:'#F59E0B',io:false,insight:'Constructive framing — calls for NS modernisation. 48-hr unique-author count growing steadily. Spreading among professionals and employers. Low threat, high policy relevance. Analyst priority: MONITOR.'},
+  {name:'"MINDEF Safety Standards" — training welfare',rv:1.4,trend:'→ Stable',origin:'Reddit',spread:['Reddit','HWZ'],ss:1,bar:45,col:'#F59E0B',io:false,insight:'Elevated following Kranji heat injury cluster (ARIA-HS-003). 48-hr unique-author count stable — narrative not accelerating. Any new safety incident would likely push R above 2.0. Analyst priority: WATCH.'},
+  {name:'"NS Career Disruption" — employability concern',rv:0.9,trend:'↓ Decelerating',origin:'HWZ',spread:['HWZ','Reddit'],ss:0,bar:29,col:'#10B981',io:false,insight:'Decelerating since NS Recognition Scheme announcement (15 Apr). 48-hr unique-author count declining. Employer discourse stable. Counter-narrative effectiveness measurement: displacement confirmed. Analyst priority: LOW.'},
+  {name:'"NS Pride / Singapore Identity" — positive frame',rv:0.6,trend:'↓ Decelerating',origin:'Official comms',spread:['Instagram','YouTube'],ss:0,bar:19,col:'#3B82F6',io:false,insight:'NS50 campaign content. Organic propagation moderate (35% organic share). Displacement of Career Disruption narrative confirmed in parent/post-ORD cohort. Analyst priority: MAINTAIN MONITORING.'},
 ];
 document.getElementById('rv-grid').innerHTML=narratives.map(n=>{
   const cls=n.rv>=2.5?'danger':n.rv>=1.5?'warn':n.rv>=1?'info':'ok';
