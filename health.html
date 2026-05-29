@@ -113,9 +113,13 @@
             <div class="fs11 text-muted" style="margin-top:4px">Target: >75% · Exceeding target by 7.1pp</div>
           </div>
           <div>
-            <div class="flex-between" style="margin-bottom:6px"><span class="fs12 fw700">Mean Time to Detect (MTTD)</span><span class="fs12 fw700" style="color:var(--primary)">3.2 min</span></div>
-            <div class="gauge-bar" style="height:10px"><div class="gauge-fill" style="width:96%;background:linear-gradient(90deg,var(--primary),#60A5FA)"></div></div>
-            <div class="fs11 text-muted" style="margin-top:4px">Target: &lt;5 min · Well within threshold</div>
+            <div class="flex-between" style="margin-bottom:4px"><span class="fs12 fw700">Detection Latency (by type)</span></div>
+            <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:4px">
+              <div class="flex-between"><span style="font-size:11px;color:var(--dim)">Volume anomalies (streaming)</span><span style="font-size:11px;font-weight:700;color:var(--success)">&lt;5 min</span></div>
+              <div class="flex-between"><span style="font-size:11px;color:var(--dim)">Sentiment drift (micro-batch)</span><span style="font-size:11px;font-weight:700;color:var(--primary)">&lt;15 min</span></div>
+              <div class="flex-between"><span style="font-size:11px;color:var(--dim)">Coordination detection (batch)</span><span style="font-size:11px;font-weight:700;color:var(--warning)">&lt;6 hrs</span></div>
+            </div>
+            <div class="fs11 text-muted">All types transformative vs days–weeks manual baseline</div>
           </div>
           <div>
             <div class="flex-between" style="margin-bottom:6px"><span class="fs12 fw700">RIL Autonomous Adjustments (30d)</span><span class="fs12 fw700" style="color:var(--purple)">47</span></div>

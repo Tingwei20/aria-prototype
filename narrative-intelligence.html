@@ -409,11 +409,11 @@ new Chart(document.getElementById('hansardChart'),{type:'bar',data:{labels:month
 // ── EPIDEMIOLOGY ──────────────────────────────────────────────────────────
 const narratives=[
   {name:'"Foreign Talent vs NSF" fairness frame',rv:3.1,trend:'↑ Surging',origin:'HardwareZone EDMW',spread:['HWZ','Reddit','TikTok','Telegram'],ss:4,bar:100,col:'#EF4444',io:true,insight:'Simultaneous 5-platform seeding detected 26 May. 4 super-spreader accounts flagged (low authenticity scores). 48-hr unique-author count: 847 new authors in latest window vs 312 prior. Accelerating — analyst escalation priority: HIGH.'},
-  {name:'"NS Inequality" — sacrifice vs reward gap',rv:2.8,trend:'↑ Growing',origin:'Reddit',spread:['Reddit','TikTok','Instagram'],ss:2,bar:90,col:'#EF4444',io:false,insight:'48-hr unique-author count: 612 new authors in latest window vs 287 prior. Organic amplification — primarily pre-enlistees and active NSF cohort. No IO indicators. Cosine cluster similarity ≥0.82 (confirmed same narrative). Analyst priority: HIGH.'},
+  {name:'"NS Inequality" — sacrifice vs reward gap',rv:2.8,trend:'↑ Growing',origin:'Reddit',spread:['Reddit','TikTok','Telegram'],ss:2,bar:90,col:'#EF4444',io:false,insight:'48-hr unique-author count: 612 new authors in latest window vs 287 prior. Organic amplification — primarily pre-enlistees and active NSF cohort. No IO indicators. Cosine cluster similarity ≥0.82 (confirmed same narrative). Analyst priority: HIGH.'},
   {name:'"NS Digital Skills Gap" — relevance to modern warfare',rv:1.7,trend:'↑ Growing',origin:'LinkedIn',spread:['LinkedIn','Reddit'],ss:1,bar:55,col:'#F59E0B',io:false,insight:'Constructive framing — calls for NS modernisation. 48-hr unique-author count growing steadily. Spreading among professionals and employers. Low threat, high policy relevance. Analyst priority: MONITOR.'},
   {name:'"MINDEF Safety Standards" — training welfare',rv:1.4,trend:'→ Stable',origin:'Reddit',spread:['Reddit','HWZ'],ss:1,bar:45,col:'#F59E0B',io:false,insight:'Elevated following Kranji heat injury cluster (ARIA-HS-003). 48-hr unique-author count stable — narrative not accelerating. Any new safety incident would likely push R above 2.0. Analyst priority: WATCH.'},
   {name:'"NS Career Disruption" — employability concern',rv:0.9,trend:'↓ Decelerating',origin:'HWZ',spread:['HWZ','Reddit'],ss:0,bar:29,col:'#10B981',io:false,insight:'Decelerating since NS Recognition Scheme announcement (15 Apr). 48-hr unique-author count declining. Employer discourse stable. Counter-narrative effectiveness measurement: displacement confirmed. Analyst priority: LOW.'},
-  {name:'"NS Pride / Singapore Identity" — positive frame',rv:0.6,trend:'↓ Decelerating',origin:'Official comms',spread:['Instagram','YouTube'],ss:0,bar:19,col:'#3B82F6',io:false,insight:'NS50 campaign content. Organic propagation moderate (35% organic share). Displacement of Career Disruption narrative confirmed in parent/post-ORD cohort. Analyst priority: MAINTAIN MONITORING.'},
+  {name:'"NS Pride / Singapore Identity" — positive frame',rv:0.6,trend:'↓ Decelerating',origin:'Official comms',spread:['YouTube','CNA','Mothership'],ss:0,bar:19,col:'#3B82F6',io:false,insight:'NS50 campaign content. Organic propagation moderate (35% organic share). Displacement of Career Disruption narrative confirmed in parent/post-ORD cohort. Analyst priority: MAINTAIN MONITORING.'},
 ];
 document.getElementById('rv-grid').innerHTML=narratives.map(n=>{
   const cls=n.rv>=2.5?'danger':n.rv>=1.5?'warn':n.rv>=1?'info':'ok';
@@ -498,7 +498,7 @@ const scenarios=[
     ],
     platforms:[
       {name:'LinkedIn',peak:'High (employers/parents)',col:'#10B981'},
-      {name:'Instagram',peak:'Medium-high',col:'#10B981'},
+      {name:'YouTube / CNA',peak:'Medium-high (official comms receptive)',col:'#10B981'},
       {name:'HardwareZone EDMW',peak:'Mixed — "not enough" counter-narrative',col:'#F59E0B'},
       {name:'Reddit r/NS',peak:'Medium (duration remains grievance)',col:'#F59E0B'},
       {name:'TikTok',peak:'Medium (positive content amplifiable)',col:'#10B981'},
